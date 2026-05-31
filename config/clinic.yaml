@@ -1,0 +1,11 @@
+name: "Lighthouse Dental & Implant Centre"
+# 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat
+working_weekdays: [0, 1, 2, 3, 4, 5]
+sessions:
+  - daypart: morning
+    start: "08:00"
+    end: "13:00"
+  - daypart: afternoon
+    start: "14:00"
+    end: "18:00"
+assistants_per_dentist: 1

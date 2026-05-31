@@ -1,0 +1,18 @@
+# Which assistants each dentist prefers, in order of preference.
+dentist_preferences:
+  D_MK:    [A_SARA, A_MAYA]
+  D_MARIO: [A_MAYA, A_LENA]
+  D_KIRAN: [A_TOM, A_LENA]
+
+# Map a procedure category (from Open Dental) to required assistant skill(s).
+procedure_skill_map:
+  Implant:      [implant]
+  Surgery:      [surgery]
+  Endodontics:  [endo]
+  Orthodontics: [ortho]
+  Hygiene/Recall: [hygiene]
+
+# Master list of valid skills (used for validation).
+skill_catalogue: [general, implant, surgery, endo, ortho, restorative, hygiene]
+
+allow_overtime: true
