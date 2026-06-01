@@ -80,6 +80,7 @@ class Assignment:
     staff_name:  str
     role:        Role
     hours:       float
+    serves_provider_id: Optional[int]  = None
     reasons:     list[str] = field(default_factory=list)  # why this person was chosen
 
 
