@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dental Roster — Lighthouse Dental</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a202c; }
+
+    /* ── Header ── */
+    .header { background: #0e5c4a; color: white; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+    .header h1 { font-size: 17px; font-weight: 700; }
+    .header p  { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+    /* ── Controls ── */
+    .controls { background: white; border-bottom: 1px solid #e2e8f0; padding: 14px 24px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; }
+    .field input { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
+    .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-primary   { background: #0e5c4a; color: white; }
+    .btn-primary:hover { background: #0a4538; }
+    .btn-secondary { background: #edf2f7; color: #4a5568; }
+
+    /* ── Exceptions ── */
+    .exc-panel { background: white; border-bottom: 1px solid #e2e8f0; }
+    .exc-toggle { width: 100%; text-align: left; padding: 11px 24px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 8px; }
+    .exc-body { padding: 0 24px 16px; display: none; }
+    .exc-body.open { display: block; }
+    .exc-section { margin-bottom: 14px; }
+    .exc-section strong { font-size: 13px; display: block; margin-bottom: 6px; }
+    .exc-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+    .exc-row select, .exc-row input[type=date], .exc-row input[type=time] { border: 1px solid #cbd5e0; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+    .btn-remove { background: none; border: none; color: #fc8181; cursor: pointer; font-size: 18px; line-height: 1; }
+    .btn-add { background: none; border: 1px dashed #0e5c4a; color: #0e5c4a; border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+
+    /* ── Status ── */
+    .status { padding: 10px 24px; font-size: 13px; color: #718096; background: white; border-bottom: 1px solid #e2e8f0; min-height: 42px; display: flex; align-items: center; }
+    .status.ok  { color: #276749; }
+    .status.err { color: #c53030; }
+
+    /* ── Summary cards ── */
+    .summary { display: flex; gap: 14px; padding: 20px 24px 0; flex-wrap: wrap; }
+    .card { background: white; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); min-width: 140px; }
+    .card .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #a0aec0; letter-spacing: 0.5px; }
+    .card .val { font-size: 26px; font-weight: 800; color: #2d3748; margin-top: 3px; }
+    .card .sub { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+
+    /* ── Vacancy banner ── */
+    .vacancy-banner { margin: 16px 24px 0; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #c53030; }
+
+    /* ── Notes ── */
+    .notes { padding: 12px 24px 0; }
+    .note { background: #fffbea; border-left: 3px solid #f6ad55; padding: 9px 13px; border-radius: 0 6px 6px 0; font-size: 13px; color: #744210; margin-bottom: 6px; }
+
+    /* ── Grid ── */
+    .grid-wrap { overflow-x: auto; padding: 20px 24px; }
+    .roster-table { border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); white-space: nowrap; }
+    .roster-table th, .roster-table td { border: 1px solid #e2e8f0; }
+
+    /* column headers */
+    .roster-table thead th { background: #f7fafc; padding: 8px 12px; text-align: center; }
+    .roster-table thead th.name-col { text-align: left; min-width: 190px; }
+    .sh-day  { font-weight: 800; font-size: 13px; color: #2d3748; }
+    .sh-time { font-size: 11px; color: #718096; margin-top: 1px; }
+    .sh-part { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 9px; }
+    .part-am { background: #ebf8ff; color: #2c5282; }
+    .part-pm { background: #fefcbf; color: #744210; }
+
+    /* staff name cell */
+    .roster-table tbody td.name-cell { padding: 9px 13px; font-size: 13px; font-weight: 600; border-right: 2px solid #e2e8f0; }
+    .role-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+    .rb-dentist   { background: #ebf4ff; color: #2b6cb0; }
+    .rb-hygienist { background: #e6fffa; color: #276749; }
+    .rb-assistant { background: #fffaf0; color: #c05621; }
+
+    /* assignment cells */
+    .asgn-cell { padding: 7px 9px; min-width: 120px; text-align: center; vertical-align: middle; }
+    .chip { display: inline-block; width: 100%; border-radius: 7px; padding: 5px 9px; text-align: left; font-size: 12px; }
+    .chip-dentist   { background: #ebf4ff; border: 1px solid #bee3f8; color: #2c5282; }
+    .chip-hygienist { background: #e6fffa; border: 1px solid #9ae6b4; color: #276749; }
+    .chip-assistant { background: #fffaf0; border: 1px solid #fbd38d; color: #c05621; }
+    .chip-hrs  { font-weight: 700; }
+    .chip-with { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .empty { color: #cbd5e0; font-size: 13px; }
+
+    .roster-table tbody tr:hover td { background: #f7fafc; }
+
+    /* ── Hours table ── */
+    .hours-wrap { padding: 0 24px 28px; }
+    .hours-wrap h3 { font-size: 14px; font-weight: 700; color: #4a5568; margin-bottom: 10px; }
+    .hours-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .hours-table th { background: #f7fafc; padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .hours-table td { padding: 9px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; }
+    .bar-bg { display: inline-block; vertical-align: middle; width: 90px; height: 6px; background: #e2e8f0; border-radius: 3px; }
+    .bar-fg { height: 6px; border-radius: 3px; background: #0e5c4a; }
+    .ot-label { color: #dd6b20; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>🦷</div>
+  <div>
+    <h1>Lighthouse Dental & Implant Centre</h1>
+    <p>Roster Management — Powered by Open Dental</p>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="field">
+    <label>Week Start (Monday)</label>
+    <input type="date" id="weekStart">
+  </div>
+  <div class="field">
+    <label>Week End (Saturday)</label>
+    <input type="date" id="weekEnd">
+  </div>
+  <button class="btn btn-primary" onclick="generate()">⚡ Generate Roster</button>
+  <button class="btn btn-secondary" onclick="setThisWeek()">This Week</button>
+</div>
+
+<!-- Exceptions -->
+<div class="exc-panel">
+  <button class="exc-toggle" onclick="toggleExc()">
+    <span id="excArrow">▶</span> Weekly Exceptions
+    <span id="excCount" style="color:#0e5c4a;margin-left:4px"></span>
+  </button>
+  <div class="exc-body" id="excBody">
+    <div class="exc-section">
+      <strong>Days Off</strong>
+      <div id="daysOffList"></div>
+      <button class="btn-add" onclick="addDayOff()">+ Add Day Off</button>
+    </div>
+    <div class="exc-section">
+      <strong>Late Starts</strong>
+      <div id="lateStartList"></div>
+      <button class="btn-add" onclick="addLateStart()">+ Add Late Start</button>
+    </div>
+    <div class="exc-section">
+      <strong>Notes for This Week</strong>
+      <textarea id="weekNotes" rows="2" style="width:100%;max-width:480px;border:1px solid #cbd5e0;border-radius:6px;padding:7px;font-size:13px;resize:vertical;margin-top:4px" placeholder="e.g. Dr MK leaving early Friday for CE course"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="status">Ready — select a week and click Generate Roster.</div>
+
+<div id="output"></div>
+
+<script>
+const API   = 'http://127.0.0.1:8000';
+let   STAFF = [];
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  setThisWeek();
+  try {
+    const r    = await fetch(`${API}/api/config/staff`);
+    const data = await r.json();
+    STAFF = data.staff;
+  } catch {
+    setStatus('Cannot reach API — make sure uvicorn is running on port 8000.', 'err');
+  }
+}
+
+function setThisWeek() {
+  const today = new Date();
+  const dow   = today.getDay();
+  const mon   = new Date(today);
+  mon.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  const sat = new Date(mon); sat.setDate(mon.getDate() + 5);
+  document.getElementById('weekStart').value = fmt(mon);
+  document.getElementById('weekEnd').value   = fmt(sat);
+}
+
+function fmt(d) { return d.toISOString().split('T')[0]; }
+
+function setStatus(msg, cls = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className   = 'status ' + cls;
+}
+
+// ── Exceptions ───────────────────────────────────────────────────────────────
+function toggleExc() {
+  const b = document.getElementById('excBody');
+  const a = document.getElementById('excArrow');
+  const open = b.classList.toggle('open');
+  a.textContent = open ? '▼' : '▶';
+}
+
+function staffOptions(role = 'assistant') {
+  return STAFF
+    .filter(s => role === 'all' || s.role === role)
+    .map(s => `<option value="${s.staff_id}">${s.name}</option>`)
+    .join('');
+}
+
+function addDayOff() {
+  const ws  = document.getElementById('weekStart').value;
+  const row = document.createElement('div');
+  row.className = 'exc-row';
+  row.innerHTML = `
+    <select><option value="">— select staff —</option>${staffOptions('all')}</select>
+    <input type="date" value="${ws}">
+    <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
+  document.getElementById('daysOffList').appendChild(row);
+  updateExcCount();
+}
+
+function addLateStart() {
+  const ws  = document.getElementById('weekStart').value;
+  const row = document.createElement('div');
+  row.className = 'exc-row';
+  row.innerHTML = `
+    <select><option value="">— select staff —</option>${staffOptions('all')}</select>
+    <input type="date" value="${ws}">
+    <span style="font-size:12px;color:#718096">arrives at</span>
+    <input type="time" value="09:00">
+    <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
+  document.getElementById('lateStartList').appendChild(row);
+  updateExcCount();
+}
+
+function updateExcCount() {
+  const n = document.querySelectorAll('.exc-row').length;
+  document.getElementById('excCount').textContent = n ? `(${n})` : '';
+}
+
+function collectExceptions() {
+  const days_off = [];
+  document.querySelectorAll('#daysOffList .exc-row').forEach(row => {
+    const [sel, dt] = row.querySelectorAll('select, input[type=date]');
+    if (sel.value && dt.value) days_off.push({ staff_id: sel.value, date: dt.value });
+  });
+
+  const late_starts = [];
+  document.querySelectorAll('#lateStartList .exc-row').forEach(row => {
+    const sel  = row.querySelector('select');
+    const dt   = row.querySelector('input[type=date]');
+    const time = row.querySelector('input[type=time]');
+    if (sel.value && dt.value && time.value)
+      late_starts.push({ staff_id: sel.value, date: dt.value, start_time: time.value });
+  });
+
+  const note = document.getElementById('weekNotes').value.trim();
+  return { days_off, late_starts, early_finishes: [], notes: note ? [note] : [] };
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+async function generate() {
+  const ws = document.getElementById('weekStart').value;
+  const we = document.getElementById('weekEnd').value;
+  if (!ws || !we) { setStatus('Select a week first.', 'err'); return; }
+
+  setStatus('Generating roster from Open Dental data…');
+  document.getElementById('output').innerHTML =
+    '<div style="padding:48px;text-align:center;color:#a0aec0">Building roster…</div>';
+
+  try {
+    const exc = collectExceptions();
+    const hasExc = exc.days_off.length || exc.late_starts.length || exc.notes.length;
+    const url = `${API}/api/roster?week_start=${ws}&week_end=${we}`;
+    const res = hasExc
+      ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(exc) })
+      : await fetch(url);
+
+    if (!res.ok) { const e = await res.json(); setStatus(e.detail, 'err'); return; }
+
+    const data = await res.json();
+    const s = data.summary;
+    setStatus(`✓ Roster ready — ${s.total_assignments} assignments · $${s.total_cost.toLocaleString()} weekly cost · ${s.vacancies} vacancies`, 'ok');
+    render(data, ws);
+  } catch (e) {
+    setStatus(`Connection error: ${e.message}`, 'err');
+    document.getElementById('output').innerHTML = '';
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(roster, weekStart) {
+  document.getElementById('output').innerHTML = `
+    ${vacancyBanner(roster.vacancies)}
+    ${notesHtml(roster.notes)}
+    <div class="summary">${summaryCards(roster)}</div>
+    <div class="grid-wrap">${grid(roster, weekStart)}</div>
+    <div class="hours-wrap"><h3>Staff Hours & Cost</h3>${hoursTable(roster.hours)}</div>
+  `;
+}
+
+// Build the 12-column session list (Mon–Sat × AM/PM)
+function buildSessions(weekStart) {
+  const days    = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const sessions = [];
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i);
+    const date = fmt(d);
+    sessions.push({ key: `${date}|morning`,   date, day: days[i], part: 'morning',   time: '8:00 – 13:00' });
+    sessions.push({ key: `${date}|afternoon`, date, day: days[i], part: 'afternoon', time: '14:00 – 18:00' });
+  }
+  return sessions;
+}
+
+// Dentist name lookup: provider_id → staff name
+function dentistNameMap() {
+  const map = {};
+  STAFF.forEach(s => { if (s.provider_id) map[s.provider_id] = s.name; });
+  return map;
+}
+
+function grid(roster, weekStart) {
+  const sessions   = buildSessions(weekStart);
+  const dentistMap = dentistNameMap();
+
+  // Index assignments by session_key
+  const bySession = {};
+  roster.assignments.forEach(a => {
+    (bySession[a.session_key] = bySession[a.session_key] || []).push(a);
+  });
+
+  // Only show sessions that have at least one assignment
+  const active = sessions.filter(s => bySession[s.key]?.length);
+
+  // Staff row order: dentists → hygienists → assistants
+  const order = { dentist: 0, hygienist: 1, assistant: 2 };
+  const staffRows = [...STAFF].sort((a, b) => order[a.role] - order[b.role]);
+
+  // ── Header ──
+  const hdr = `<tr>
+    <th class="name-col">Staff Member</th>
+    ${active.map(s => `<th>
+      <div class="sh-day">${s.day} <span style="font-weight:400;color:#718096">${s.date.slice(5).replace('-','/')}</span></div>
+      <div class="sh-time">${s.time}</div>
+      <span class="sh-part ${s.part === 'morning' ? 'part-am' : 'part-pm'}">${s.part}</span>
+    </th>`).join('')}
+  </tr>`;
+
+  // ── Rows ──
+  const rows = staffRows.map(staff => {
+    const cells = active.map(session => {
+      const a = (bySession[session.key] || []).find(x => x.staff_id === staff.staff_id);
+      if (!a) return `<td class="asgn-cell"><span class="empty">—</span></td>`;
+
+      let withLine = '';
+      if (a.serves_provider_id) {
+        const dName = dentistMap[a.serves_provider_id] || `Prov ${a.serves_provider_id}`;
+        withLine = `<div class="chip-with">w/ ${dName.replace('Dr ', '')}</div>`;
+      }
+      return `<td class="asgn-cell">
+        <div class="chip chip-${a.role}">
+          <div class="chip-hrs">${a.hours}h</div>
+          ${withLine}
+        </div>
+      </td>`;
+    }).join('');
+
+    const badge = `<span class="role-badge rb-${staff.role}">${staff.role}</span>`;
+    return `<tr><td class="name-cell">${staff.name}${badge}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<table class="roster-table"><thead>${hdr}</thead><tbody>${rows}</tbody></table>`;
+}
+
+function summaryCards(roster) {
+  const s = roster.summary;
+  const vacColor = s.vacancies > 0 ? '#e53e3e' : '#276749';
+  const otColor  = s.overtime_hours > 0 ? '#dd6b20' : '#276749';
+  return `
+    <div class="card"><div class="lbl">Assignments</div><div class="val">${s.total_assignments}</div><div class="sub">across the week</div></div>
+    <div class="card"><div class="lbl">Vacancies</div><div class="val" style="color:${vacColor}">${s.vacancies}</div><div class="sub">${s.vacancies === 0 ? 'fully covered ✓' : 'need attention'}</div></div>
+    <div class="card"><div class="lbl">Weekly Cost</div><div class="val">$${s.total_cost.toLocaleString()}</div><div class="sub">estimated payroll</div></div>
+    <div class="card"><div class="lbl">Overtime</div><div class="val" style="color:${otColor}">${s.overtime_hours}h</div><div class="sub">this week</div></div>
+  `;
+}
+
+function hoursTable(hours) {
+  const rows = hours.map(h => {
+    const pct = Math.min(100, Math.round(h.total_hours / h.max_hours * 100));
+    const ot  = h.overtime_hours > 0 ? `<span class="ot-label"> +${h.overtime_hours}h OT</span>` : '';
+    return `<tr>
+      <td>${h.staff_name}</td>
+      <td><span class="role-badge rb-${h.role}">${h.role}</span></td>
+      <td>${h.total_hours}h / ${h.max_hours}h${ot}</td>
+      <td><div class="bar-bg"><div class="bar-fg" style="width:${pct}%"></div></div></td>
+      <td style="font-weight:600">$${h.cost.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="hours-table">
+    <thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Utilisation</th><th>Est. Cost</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function vacancyBanner(vacancies) {
+  if (!vacancies?.length) return '';
+  return `<div class="vacancy-banner">⚠️ ${vacancies.length} unfilled slot(s) require manual assignment:<br>
+    ${vacancies.map(v => `${v.session_key} — Provider ${v.serves_provider_id}: ${v.reason}`).join('<br>')}
+  </div>`;
+}
+
+function notesHtml(notes) {
+  if (!notes?.length) return '';
+  return `<div class="notes">${notes.map(n => `<div class="note">${n}</div>`).join('')}</div>`;
+}
+
+init();
+</script>
+</body>
+</html>

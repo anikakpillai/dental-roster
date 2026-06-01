@@ -147,6 +147,7 @@ def get_staff():
                 "skills":           sorted(s.skills),
                 "max_weekly_hours": s.max_weekly_hours,
                 "hourly_cost":      s.hourly_cost,
+                "provider_id":      s.provider_id,
             }
             for s in cfg.staff
         ]
