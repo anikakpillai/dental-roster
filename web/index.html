@@ -12,15 +12,24 @@
     .header h1 { font-size: 17px; font-weight: 700; }
     .header p  { font-size: 12px; opacity: 0.75; margin-top: 2px; }
 
+    /* ── Tabs ── */
+    .tabs { background: white; border-bottom: 1px solid #e2e8f0; display: flex; padding: 0 24px; gap: 0; }
+    .tab { padding: 13px 20px; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; border: none; background: none; }
+    .tab.active { color: #0e5c4a; border-bottom: 3px solid #0e5c4a; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     /* ── Controls ── */
     .controls { background: white; border-bottom: 1px solid #e2e8f0; padding: 14px 24px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; }
-    .field input { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
+    .field input, .field select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
     .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; }
     .btn-primary   { background: #0e5c4a; color: white; }
     .btn-primary:hover { background: #0a4538; }
     .btn-secondary { background: #edf2f7; color: #4a5568; }
+    .btn-danger    { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
 
     /* ── Exceptions ── */
     .exc-panel { background: white; border-bottom: 1px solid #e2e8f0; }
@@ -46,19 +55,15 @@
     .card .val { font-size: 26px; font-weight: 800; color: #2d3748; margin-top: 3px; }
     .card .sub { font-size: 11px; color: #a0aec0; margin-top: 2px; }
 
-    /* ── Vacancy banner ── */
+    /* ── Vacancy / Notes ── */
     .vacancy-banner { margin: 16px 24px 0; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #c53030; }
-
-    /* ── Notes ── */
     .notes { padding: 12px 24px 0; }
     .note { background: #fffbea; border-left: 3px solid #f6ad55; padding: 9px 13px; border-radius: 0 6px 6px 0; font-size: 13px; color: #744210; margin-bottom: 6px; }
 
-    /* ── Grid ── */
+    /* ── Roster Grid ── */
     .grid-wrap { overflow-x: auto; padding: 20px 24px; }
     .roster-table { border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); white-space: nowrap; }
     .roster-table th, .roster-table td { border: 1px solid #e2e8f0; }
-
-    /* column headers */
     .roster-table thead th { background: #f7fafc; padding: 8px 12px; text-align: center; }
     .roster-table thead th.name-col { text-align: left; min-width: 190px; }
     .sh-day  { font-weight: 800; font-size: 13px; color: #2d3748; }
@@ -66,15 +71,11 @@
     .sh-part { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 9px; }
     .part-am { background: #ebf8ff; color: #2c5282; }
     .part-pm { background: #fefcbf; color: #744210; }
-
-    /* staff name cell */
     .roster-table tbody td.name-cell { padding: 9px 13px; font-size: 13px; font-weight: 600; border-right: 2px solid #e2e8f0; }
     .role-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
     .rb-dentist   { background: #ebf4ff; color: #2b6cb0; }
     .rb-hygienist { background: #e6fffa; color: #276749; }
     .rb-assistant { background: #fffaf0; color: #c05621; }
-
-    /* assignment cells */
     .asgn-cell { padding: 7px 9px; min-width: 120px; text-align: center; vertical-align: middle; }
     .chip { display: inline-block; width: 100%; border-radius: 7px; padding: 5px 9px; text-align: left; font-size: 12px; }
     .chip-dentist   { background: #ebf4ff; border: 1px solid #bee3f8; color: #2c5282; }
@@ -83,7 +84,6 @@
     .chip-hrs  { font-weight: 700; }
     .chip-with { font-size: 11px; opacity: 0.8; margin-top: 2px; }
     .empty { color: #cbd5e0; font-size: 13px; }
-
     .roster-table tbody tr:hover td { background: #f7fafc; }
 
     /* ── Hours table ── */
@@ -95,6 +95,61 @@
     .bar-bg { display: inline-block; vertical-align: middle; width: 90px; height: 6px; background: #e2e8f0; border-radius: 3px; }
     .bar-fg { height: 6px; border-radius: 3px; background: #0e5c4a; }
     .ot-label { color: #dd6b20; font-size: 11px; }
+
+    /* ── Staff Management ── */
+    .staff-section { padding: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-header h2 { font-size: 16px; font-weight: 700; color: #2d3748; }
+    .section-divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+
+    /* Staff list table */
+    .staff-list-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px; }
+    .staff-list-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .staff-list-table td { padding: 11px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
+    .staff-list-table tr.inactive td { opacity: 0.45; }
+    .skill-tag { display: inline-block; background: #edf2f7; color: #4a5568; border-radius: 4px; padding: 2px 7px; font-size: 11px; margin: 1px 2px; }
+    .inactive-badge { background: #fed7d7; color: #c53030; border-radius: 4px; padding: 2px 7px; font-size: 11px; }
+
+    /* Add/Edit panel */
+    .form-panel { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px 24px; margin-bottom: 24px; display: none; }
+    .form-panel.open { display: block; }
+    .form-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #2d3748; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; }
+    .form-field input, .form-field select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px 11px; font-size: 13px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+    /* Skills checkboxes */
+    .skills-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .skill-check { display: flex; align-items: center; gap: 5px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; }
+    .skill-check input { cursor: pointer; }
+    .skill-check.checked { background: #ebf8ff; border-color: #90cdf4; color: #2b6cb0; }
+
+    /* Working pattern grid */
+    .pattern-grid { border-collapse: collapse; margin-top: 6px; }
+    .pattern-grid th, .pattern-grid td { padding: 6px 10px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0; }
+    .pattern-grid th { background: #f7fafc; font-weight: 700; color: #718096; }
+    .pattern-grid td { background: white; }
+    .pattern-grid input[type=checkbox] { cursor: pointer; width: 15px; height: 15px; }
+
+    /* ── Preferences ── */
+    .pref-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .pref-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; }
+    .pref-table td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
+    .pref-table select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 5px 8px; font-size: 13px; margin-right: 6px; }
+
+    /* ── Procedure Rules ── */
+    .proc-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .proc-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; }
+    .proc-table td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
+    .new-proc-row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+    .new-proc-row input { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
+
+    .save-banner { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #276749; margin-top: 16px; display: none; }
+    .save-banner.show { display: block; }
   </style>
 </head>
 <body>
@@ -107,83 +162,249 @@
   </div>
 </div>
 
-<!-- Controls -->
-<div class="controls">
-  <div class="field">
-    <label>Week Start (Monday)</label>
-    <input type="date" id="weekStart">
-  </div>
-  <div class="field">
-    <label>Week End (Saturday)</label>
-    <input type="date" id="weekEnd">
-  </div>
-  <button class="btn btn-primary" onclick="generate()">⚡ Generate Roster</button>
-  <button class="btn btn-secondary" onclick="setThisWeek()">This Week</button>
+<!-- Tab bar -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('roster')">📋 Roster</button>
+  <button class="tab" onclick="switchTab('staff')">👥 Staff & Rules</button>
 </div>
 
-<!-- Exceptions -->
-<div class="exc-panel">
-  <button class="exc-toggle" onclick="toggleExc()">
-    <span id="excArrow">▶</span> Weekly Exceptions
-    <span id="excCount" style="color:#0e5c4a;margin-left:4px"></span>
-  </button>
-  <div class="exc-body" id="excBody">
-    <div class="exc-section">
-      <strong>Days Off</strong>
-      <div id="daysOffList"></div>
-      <button class="btn-add" onclick="addDayOff()">+ Add Day Off</button>
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ROSTER TAB                                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-roster">
+
+  <div class="controls">
+    <div class="field">
+      <label>Week Start (Monday)</label>
+      <input type="date" id="weekStart">
     </div>
-    <div class="exc-section">
-      <strong>Late Starts</strong>
-      <div id="lateStartList"></div>
-      <button class="btn-add" onclick="addLateStart()">+ Add Late Start</button>
+    <div class="field">
+      <label>Week End (Saturday)</label>
+      <input type="date" id="weekEnd">
     </div>
-    <div class="exc-section">
-      <strong>Notes for This Week</strong>
-      <textarea id="weekNotes" rows="2" style="width:100%;max-width:480px;border:1px solid #cbd5e0;border-radius:6px;padding:7px;font-size:13px;resize:vertical;margin-top:4px" placeholder="e.g. Dr MK leaving early Friday for CE course"></textarea>
+    <button class="btn btn-primary" onclick="generateRoster()">⚡ Generate Roster</button>
+    <button class="btn btn-secondary" onclick="setThisWeek()">This Week</button>
+  </div>
+
+  <div class="exc-panel">
+    <button class="exc-toggle" onclick="toggleExc()">
+      <span id="excArrow">▶</span> Weekly Exceptions
+      <span id="excCount" style="color:#0e5c4a;margin-left:4px"></span>
+    </button>
+    <div class="exc-body" id="excBody">
+      <div class="exc-section">
+        <strong>Days Off</strong>
+        <div id="daysOffList"></div>
+        <button class="btn-add" onclick="addDayOff()">+ Add Day Off</button>
+      </div>
+      <div class="exc-section">
+        <strong>Late Starts</strong>
+        <div id="lateStartList"></div>
+        <button class="btn-add" onclick="addLateStart()">+ Add Late Start</button>
+      </div>
+      <div class="exc-section">
+        <strong>Notes for This Week</strong>
+        <textarea id="weekNotes" rows="2" style="width:100%;max-width:480px;border:1px solid #cbd5e0;border-radius:6px;padding:7px;font-size:13px;resize:vertical;margin-top:4px" placeholder="e.g. Dr MK leaving early Friday for CE course"></textarea>
+      </div>
     </div>
   </div>
+
+  <div class="status" id="rosterStatus">Ready — select a week and click Generate Roster.</div>
+  <div id="rosterOutput"></div>
+
+</div><!-- /tab-roster -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- STAFF & RULES TAB                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-staff">
+<div class="staff-section">
+
+  <!-- ── Staff Members ─────────────────────────────────────────────────── -->
+  <div class="section-header">
+    <h2>Staff Members</h2>
+    <button class="btn btn-primary btn-sm" onclick="openAddForm()">+ Add Staff Member</button>
+  </div>
+
+  <!-- Add / Edit form panel -->
+  <div class="form-panel" id="staffForm">
+    <h3 id="formTitle">Add Staff Member</h3>
+    <input type="hidden" id="editingId">
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Full Name *</label>
+        <input type="text" id="fName" placeholder="e.g. Sara Johal">
+      </div>
+      <div class="form-field">
+        <label>Role *</label>
+        <select id="fRole" onchange="toggleProviderField()">
+          <option value="assistant">Dental Assistant</option>
+          <option value="hygienist">Hygienist</option>
+          <option value="dentist">Dentist</option>
+        </select>
+      </div>
+      <div class="form-field" id="providerIdField" style="display:none">
+        <label>Open Dental Provider ID</label>
+        <input type="number" id="fProviderId" placeholder="e.g. 5">
+      </div>
+      <div class="form-field">
+        <label>Hourly Cost ($)</label>
+        <input type="number" id="fCost" value="30" step="0.5">
+      </div>
+      <div class="form-field">
+        <label>Max Weekly Hours</label>
+        <input type="number" id="fMaxHours" value="40">
+      </div>
+      <div class="form-field">
+        <label>Overtime Threshold (h)</label>
+        <input type="number" id="fOtHours" value="40">
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="form-field" style="margin-top:14px">
+      <label>Skills</label>
+      <div class="skills-grid" id="skillsGrid"></div>
+    </div>
+
+    <!-- Working pattern -->
+    <div class="form-field" style="margin-top:14px">
+      <label>Working Pattern <span style="font-weight:400;text-transform:none;color:#a0aec0">(leave all unchecked = available every session)</span></label>
+      <table class="pattern-grid" id="patternGrid">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th style="text-align:left">Morning</th>
+            <td><input type="checkbox" data-day="0" data-part="morning"></td>
+            <td><input type="checkbox" data-day="1" data-part="morning"></td>
+            <td><input type="checkbox" data-day="2" data-part="morning"></td>
+            <td><input type="checkbox" data-day="3" data-part="morning"></td>
+            <td><input type="checkbox" data-day="4" data-part="morning"></td>
+            <td><input type="checkbox" data-day="5" data-part="morning"></td>
+          </tr>
+          <tr>
+            <th style="text-align:left">Afternoon</th>
+            <td><input type="checkbox" data-day="0" data-part="afternoon"></td>
+            <td><input type="checkbox" data-day="1" data-part="afternoon"></td>
+            <td><input type="checkbox" data-day="2" data-part="afternoon"></td>
+            <td><input type="checkbox" data-day="3" data-part="afternoon"></td>
+            <td><input type="checkbox" data-day="4" data-part="afternoon"></td>
+            <td><input type="checkbox" data-day="5" data-part="afternoon"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveStaff()">Save</button>
+      <button class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Staff list -->
+  <div id="staffListWrap">
+    <div style="padding:32px;text-align:center;color:#a0aec0">Loading staff…</div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- ── Dentist Preferences ─────────────────────────────────────────── -->
+  <div class="section-header">
+    <h2>Dentist Preferences</h2>
+    <button class="btn btn-primary btn-sm" onclick="savePreferences()">Save Preferences</button>
+  </div>
+  <p style="font-size:13px;color:#718096;margin-bottom:14px">Set which assistants each dentist prefers to work with, in ranked order.</p>
+  <div id="preferencesWrap">
+    <div style="padding:24px;text-align:center;color:#a0aec0">Loading…</div>
+  </div>
+  <div class="save-banner" id="prefBanner">✓ Preferences saved successfully.</div>
+
+  <hr class="section-divider">
+
+  <!-- ── Procedure → Skill Rules ─────────────────────────────────────── -->
+  <div class="section-header">
+    <h2>Procedure Skill Requirements</h2>
+    <button class="btn btn-primary btn-sm" onclick="saveProcedures()">Save Rules</button>
+  </div>
+  <p style="font-size:13px;color:#718096;margin-bottom:14px">Which skills are required to assist with each procedure type.</p>
+  <div id="proceduresWrap">
+    <div style="padding:24px;text-align:center;color:#a0aec0">Loading…</div>
+  </div>
+  <div class="new-proc-row">
+    <input type="text" id="newProcName" placeholder="New procedure name e.g. Sedation">
+    <button class="btn btn-secondary btn-sm" onclick="addProcedureRow()">+ Add Procedure</button>
+  </div>
+  <div class="save-banner" id="procBanner">✓ Procedure rules saved successfully.</div>
+
 </div>
-
-<div class="status" id="status">Ready — select a week and click Generate Roster.</div>
-
-<div id="output"></div>
+</div><!-- /tab-staff -->
 
 <script>
-const API   = 'http://127.0.0.1:8000';
-let   STAFF = [];
+const API = 'http://127.0.0.1:8000';
+let STAFF       = [];   // compiled staff (for roster tab)
+let STAFF_RAW   = [];   // raw YAML staff (for staff tab)
+let RULES       = {};   // {dentist_preferences, procedure_skill_map, skill_catalogue}
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
 async function init() {
   setThisWeek();
   try {
-    const r    = await fetch(`${API}/api/config/staff`);
-    const data = await r.json();
-    STAFF = data.staff;
-  } catch {
-    setStatus('Cannot reach API — make sure uvicorn is running on port 8000.', 'err');
+    const [sc, sr, ru] = await Promise.all([
+      fetch(`${API}/api/config/staff`).then(r => r.json()),
+      fetch(`${API}/api/staff`).then(r => r.json()),
+      fetch(`${API}/api/rules`).then(r => r.json()),
+    ]);
+    STAFF     = sc.staff;
+    STAFF_RAW = sr.staff;
+    RULES     = ru;
+    buildSkillsGrid();
+    renderStaffList();
+    renderPreferences();
+    renderProcedures();
+  } catch(e) {
+    setRosterStatus('Cannot reach API — make sure uvicorn is running on port 8000.', 'err');
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['roster','staff'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROSTER TAB
+// ═══════════════════════════════════════════════════════════════════════════
 function setThisWeek() {
   const today = new Date();
   const dow   = today.getDay();
-  const mon   = new Date(today);
-  mon.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
-  const sat = new Date(mon); sat.setDate(mon.getDate() + 5);
+  const mon   = new Date(today); mon.setDate(today.getDate() - (dow===0?6:dow-1));
+  const sat   = new Date(mon);   sat.setDate(mon.getDate()+5);
   document.getElementById('weekStart').value = fmt(mon);
   document.getElementById('weekEnd').value   = fmt(sat);
 }
 
 function fmt(d) { return d.toISOString().split('T')[0]; }
 
-function setStatus(msg, cls = '') {
-  const el = document.getElementById('status');
-  el.textContent = msg;
-  el.className   = 'status ' + cls;
+function setRosterStatus(msg, cls='') {
+  const el = document.getElementById('rosterStatus');
+  el.textContent = msg; el.className = 'status ' + cls;
 }
 
-// ── Exceptions ───────────────────────────────────────────────────────────────
 function toggleExc() {
   const b = document.getElementById('excBody');
   const a = document.getElementById('excArrow');
@@ -191,37 +412,28 @@ function toggleExc() {
   a.textContent = open ? '▼' : '▶';
 }
 
-function staffOptions(role = 'assistant') {
-  return STAFF
-    .filter(s => role === 'all' || s.role === role)
-    .map(s => `<option value="${s.staff_id}">${s.name}</option>`)
-    .join('');
+function staffOptionsAll() {
+  return STAFF.map(s => `<option value="${s.staff_id}">${s.name}</option>`).join('');
 }
 
 function addDayOff() {
-  const ws  = document.getElementById('weekStart').value;
-  const row = document.createElement('div');
-  row.className = 'exc-row';
-  row.innerHTML = `
-    <select><option value="">— select staff —</option>${staffOptions('all')}</select>
+  const ws = document.getElementById('weekStart').value;
+  const row = document.createElement('div'); row.className = 'exc-row';
+  row.innerHTML = `<select><option value="">— select —</option>${staffOptionsAll()}</select>
     <input type="date" value="${ws}">
     <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
-  document.getElementById('daysOffList').appendChild(row);
-  updateExcCount();
+  document.getElementById('daysOffList').appendChild(row); updateExcCount();
 }
 
 function addLateStart() {
-  const ws  = document.getElementById('weekStart').value;
-  const row = document.createElement('div');
-  row.className = 'exc-row';
-  row.innerHTML = `
-    <select><option value="">— select staff —</option>${staffOptions('all')}</select>
+  const ws = document.getElementById('weekStart').value;
+  const row = document.createElement('div'); row.className = 'exc-row';
+  row.innerHTML = `<select><option value="">— select —</option>${staffOptionsAll()}</select>
     <input type="date" value="${ws}">
     <span style="font-size:12px;color:#718096">arrives at</span>
     <input type="time" value="09:00">
     <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
-  document.getElementById('lateStartList').appendChild(row);
-  updateExcCount();
+  document.getElementById('lateStartList').appendChild(row); updateExcCount();
 }
 
 function updateExcCount() {
@@ -232,179 +444,420 @@ function updateExcCount() {
 function collectExceptions() {
   const days_off = [];
   document.querySelectorAll('#daysOffList .exc-row').forEach(row => {
-    const [sel, dt] = row.querySelectorAll('select, input[type=date]');
-    if (sel.value && dt.value) days_off.push({ staff_id: sel.value, date: dt.value });
+    const [sel,dt] = row.querySelectorAll('select,input[type=date]');
+    if (sel.value && dt.value) days_off.push({staff_id:sel.value, date:dt.value});
   });
-
   const late_starts = [];
   document.querySelectorAll('#lateStartList .exc-row').forEach(row => {
-    const sel  = row.querySelector('select');
-    const dt   = row.querySelector('input[type=date]');
-    const time = row.querySelector('input[type=time]');
-    if (sel.value && dt.value && time.value)
-      late_starts.push({ staff_id: sel.value, date: dt.value, start_time: time.value });
+    const sel=row.querySelector('select'), dt=row.querySelector('input[type=date]'), t=row.querySelector('input[type=time]');
+    if (sel.value&&dt.value&&t.value) late_starts.push({staff_id:sel.value,date:dt.value,start_time:t.value});
   });
-
   const note = document.getElementById('weekNotes').value.trim();
-  return { days_off, late_starts, early_finishes: [], notes: note ? [note] : [] };
+  return {days_off, late_starts, early_finishes:[], notes: note?[note]:[]};
 }
 
-// ── Generate ──────────────────────────────────────────────────────────────────
-async function generate() {
+async function generateRoster() {
   const ws = document.getElementById('weekStart').value;
   const we = document.getElementById('weekEnd').value;
-  if (!ws || !we) { setStatus('Select a week first.', 'err'); return; }
-
-  setStatus('Generating roster from Open Dental data…');
-  document.getElementById('output').innerHTML =
+  if (!ws||!we) { setRosterStatus('Select a week first.','err'); return; }
+  setRosterStatus('Generating roster from Open Dental data…');
+  document.getElementById('rosterOutput').innerHTML =
     '<div style="padding:48px;text-align:center;color:#a0aec0">Building roster…</div>';
-
   try {
     const exc = collectExceptions();
-    const hasExc = exc.days_off.length || exc.late_starts.length || exc.notes.length;
+    const hasExc = exc.days_off.length||exc.late_starts.length||exc.notes.length;
     const url = `${API}/api/roster?week_start=${ws}&week_end=${we}`;
     const res = hasExc
-      ? await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(exc) })
+      ? await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(exc)})
       : await fetch(url);
-
-    if (!res.ok) { const e = await res.json(); setStatus(e.detail, 'err'); return; }
-
+    if (!res.ok) { const e=await res.json(); setRosterStatus(e.detail,'err'); return; }
     const data = await res.json();
     const s = data.summary;
-    setStatus(`✓ Roster ready — ${s.total_assignments} assignments · $${s.total_cost.toLocaleString()} weekly cost · ${s.vacancies} vacancies`, 'ok');
-    render(data, ws);
-  } catch (e) {
-    setStatus(`Connection error: ${e.message}`, 'err');
-    document.getElementById('output').innerHTML = '';
+    setRosterStatus(`✓ Roster ready — ${s.total_assignments} assignments · $${s.total_cost.toLocaleString()} weekly cost · ${s.vacancies} vacancies`,'ok');
+    renderRosterOutput(data, ws);
+  } catch(e) {
+    setRosterStatus(`Connection error: ${e.message}`,'err');
+    document.getElementById('rosterOutput').innerHTML = '';
   }
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
-function render(roster, weekStart) {
-  document.getElementById('output').innerHTML = `
+function renderRosterOutput(roster, weekStart) {
+  document.getElementById('rosterOutput').innerHTML = `
     ${vacancyBanner(roster.vacancies)}
     ${notesHtml(roster.notes)}
     <div class="summary">${summaryCards(roster)}</div>
-    <div class="grid-wrap">${grid(roster, weekStart)}</div>
+    <div class="grid-wrap">${rosterGrid(roster, weekStart)}</div>
     <div class="hours-wrap"><h3>Staff Hours & Cost</h3>${hoursTable(roster.hours)}</div>
   `;
 }
 
-// Build the 12-column session list (Mon–Sat × AM/PM)
 function buildSessions(weekStart) {
-  const days    = ['Mon','Tue','Wed','Thu','Fri','Sat'];
-  const sessions = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(weekStart); d.setDate(d.getDate() + i);
-    const date = fmt(d);
-    sessions.push({ key: `${date}|morning`,   date, day: days[i], part: 'morning',   time: '8:00 – 13:00' });
-    sessions.push({ key: `${date}|afternoon`, date, day: days[i], part: 'afternoon', time: '14:00 – 18:00' });
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat'], sessions = [];
+  for (let i=0;i<6;i++) {
+    const d=new Date(weekStart); d.setDate(d.getDate()+i);
+    const date=fmt(d);
+    sessions.push({key:`${date}|morning`,  date,day:days[i],part:'morning',  time:'8:00 – 13:00'});
+    sessions.push({key:`${date}|afternoon`,date,day:days[i],part:'afternoon',time:'14:00 – 18:00'});
   }
   return sessions;
 }
 
-// Dentist name lookup: provider_id → staff name
 function dentistNameMap() {
-  const map = {};
-  STAFF.forEach(s => { if (s.provider_id) map[s.provider_id] = s.name; });
+  const map={};
+  STAFF.forEach(s=>{ if(s.provider_id) map[s.provider_id]=s.name; });
   return map;
 }
 
-function grid(roster, weekStart) {
-  const sessions   = buildSessions(weekStart);
-  const dentistMap = dentistNameMap();
-
-  // Index assignments by session_key
-  const bySession = {};
-  roster.assignments.forEach(a => {
-    (bySession[a.session_key] = bySession[a.session_key] || []).push(a);
-  });
-
-  // Only show sessions that have at least one assignment
-  const active = sessions.filter(s => bySession[s.key]?.length);
-
-  // Staff row order: dentists → hygienists → assistants
-  const order = { dentist: 0, hygienist: 1, assistant: 2 };
-  const staffRows = [...STAFF].sort((a, b) => order[a.role] - order[b.role]);
-
-  // ── Header ──
-  const hdr = `<tr>
-    <th class="name-col">Staff Member</th>
-    ${active.map(s => `<th>
-      <div class="sh-day">${s.day} <span style="font-weight:400;color:#718096">${s.date.slice(5).replace('-','/')}</span></div>
-      <div class="sh-time">${s.time}</div>
-      <span class="sh-part ${s.part === 'morning' ? 'part-am' : 'part-pm'}">${s.part}</span>
-    </th>`).join('')}
-  </tr>`;
-
-  // ── Rows ──
-  const rows = staffRows.map(staff => {
-    const cells = active.map(session => {
-      const a = (bySession[session.key] || []).find(x => x.staff_id === staff.staff_id);
-      if (!a) return `<td class="asgn-cell"><span class="empty">—</span></td>`;
-
-      let withLine = '';
-      if (a.serves_provider_id) {
-        const dName = dentistMap[a.serves_provider_id] || `Prov ${a.serves_provider_id}`;
-        withLine = `<div class="chip-with">w/ ${dName.replace('Dr ', '')}</div>`;
+function rosterGrid(roster, weekStart) {
+  const sessions=buildSessions(weekStart), dentistMap=dentistNameMap();
+  const bySession={};
+  roster.assignments.forEach(a=>{ (bySession[a.session_key]=bySession[a.session_key]||[]).push(a); });
+  const active=sessions.filter(s=>bySession[s.key]?.length);
+  const order={dentist:0,hygienist:1,assistant:2};
+  const staffRows=[...STAFF].sort((a,b)=>order[a.role]-order[b.role]);
+  const hdr=`<tr><th class="name-col">Staff Member</th>${active.map(s=>`<th>
+    <div class="sh-day">${s.day} <span style="font-weight:400;color:#718096">${s.date.slice(5).replace('-','/')}</span></div>
+    <div class="sh-time">${s.time}</div>
+    <span class="sh-part ${s.part==='morning'?'part-am':'part-pm'}">${s.part}</span>
+  </th>`).join('')}</tr>`;
+  const rows=staffRows.map(staff=>{
+    const cells=active.map(session=>{
+      const a=(bySession[session.key]||[]).find(x=>x.staff_id===staff.staff_id);
+      if(!a) return `<td class="asgn-cell"><span class="empty">—</span></td>`;
+      let withLine='';
+      if(a.serves_provider_id) {
+        const dName=dentistMap[a.serves_provider_id]||`Prov ${a.serves_provider_id}`;
+        withLine=`<div class="chip-with">w/ ${dName.replace('Dr ','')}</div>`;
       }
-      return `<td class="asgn-cell">
-        <div class="chip chip-${a.role}">
-          <div class="chip-hrs">${a.hours}h</div>
-          ${withLine}
-        </div>
-      </td>`;
+      return `<td class="asgn-cell"><div class="chip chip-${a.role}">
+        <div class="chip-hrs">${a.hours}h</div>${withLine}</div></td>`;
     }).join('');
-
-    const badge = `<span class="role-badge rb-${staff.role}">${staff.role}</span>`;
-    return `<tr><td class="name-cell">${staff.name}${badge}</td>${cells}</tr>`;
+    return `<tr><td class="name-cell">${staff.name}<span class="role-badge rb-${staff.role}">${staff.role}</span></td>${cells}</tr>`;
   }).join('');
-
   return `<table class="roster-table"><thead>${hdr}</thead><tbody>${rows}</tbody></table>`;
 }
 
 function summaryCards(roster) {
-  const s = roster.summary;
-  const vacColor = s.vacancies > 0 ? '#e53e3e' : '#276749';
-  const otColor  = s.overtime_hours > 0 ? '#dd6b20' : '#276749';
+  const s=roster.summary;
   return `
     <div class="card"><div class="lbl">Assignments</div><div class="val">${s.total_assignments}</div><div class="sub">across the week</div></div>
-    <div class="card"><div class="lbl">Vacancies</div><div class="val" style="color:${vacColor}">${s.vacancies}</div><div class="sub">${s.vacancies === 0 ? 'fully covered ✓' : 'need attention'}</div></div>
+    <div class="card"><div class="lbl">Vacancies</div><div class="val" style="color:${s.vacancies>0?'#e53e3e':'#276749'}">${s.vacancies}</div><div class="sub">${s.vacancies===0?'fully covered ✓':'need attention'}</div></div>
     <div class="card"><div class="lbl">Weekly Cost</div><div class="val">$${s.total_cost.toLocaleString()}</div><div class="sub">estimated payroll</div></div>
-    <div class="card"><div class="lbl">Overtime</div><div class="val" style="color:${otColor}">${s.overtime_hours}h</div><div class="sub">this week</div></div>
-  `;
+    <div class="card"><div class="lbl">Overtime</div><div class="val" style="color:${s.overtime_hours>0?'#dd6b20':'#276749'}">${s.overtime_hours}h</div><div class="sub">this week</div></div>`;
 }
 
 function hoursTable(hours) {
-  const rows = hours.map(h => {
-    const pct = Math.min(100, Math.round(h.total_hours / h.max_hours * 100));
-    const ot  = h.overtime_hours > 0 ? `<span class="ot-label"> +${h.overtime_hours}h OT</span>` : '';
-    return `<tr>
-      <td>${h.staff_name}</td>
-      <td><span class="role-badge rb-${h.role}">${h.role}</span></td>
+  const rows=hours.map(h=>{
+    const pct=Math.min(100,Math.round(h.total_hours/h.max_hours*100));
+    const ot=h.overtime_hours>0?`<span class="ot-label"> +${h.overtime_hours}h OT</span>`:'';
+    return `<tr><td>${h.staff_name}</td><td><span class="role-badge rb-${h.role}">${h.role}</span></td>
       <td>${h.total_hours}h / ${h.max_hours}h${ot}</td>
       <td><div class="bar-bg"><div class="bar-fg" style="width:${pct}%"></div></div></td>
-      <td style="font-weight:600">$${h.cost.toLocaleString()}</td>
-    </tr>`;
+      <td style="font-weight:600">$${h.cost.toLocaleString()}</td></tr>`;
   }).join('');
-  return `<table class="hours-table">
-    <thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Utilisation</th><th>Est. Cost</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  return `<table class="hours-table"><thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Utilisation</th><th>Est. Cost</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function vacancyBanner(vacancies) {
-  if (!vacancies?.length) return '';
-  return `<div class="vacancy-banner">⚠️ ${vacancies.length} unfilled slot(s) require manual assignment:<br>
-    ${vacancies.map(v => `${v.session_key} — Provider ${v.serves_provider_id}: ${v.reason}`).join('<br>')}
-  </div>`;
+function vacancyBanner(v) {
+  if(!v?.length) return '';
+  return `<div class="vacancy-banner">⚠️ ${v.length} unfilled slot(s):<br>${v.map(x=>`${x.session_key} — Prov ${x.serves_provider_id}: ${x.reason}`).join('<br>')}</div>`;
 }
 
 function notesHtml(notes) {
-  if (!notes?.length) return '';
-  return `<div class="notes">${notes.map(n => `<div class="note">${n}</div>`).join('')}</div>`;
+  if(!notes?.length) return '';
+  return `<div class="notes">${notes.map(n=>`<div class="note">${n}</div>`).join('')}</div>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STAFF TAB — LIST
+// ═══════════════════════════════════════════════════════════════════════════
+function renderStaffList() {
+  const rows = STAFF_RAW.map(s => {
+    const active   = s.active !== false;
+    const skills   = (s.skills||[]).map(sk=>`<span class="skill-tag">${sk}</span>`).join('');
+    const inactive = active ? '' : '<span class="inactive-badge">inactive</span>';
+    const deactBtn = active
+      ? `<button class="btn btn-danger btn-sm" onclick="deactivateStaff('${s.staff_id}','${s.name}')">Deactivate</button>`
+      : `<button class="btn btn-secondary btn-sm" onclick="reactivateStaff('${s.staff_id}')">Reactivate</button>`;
+    return `<tr class="${active?'':'inactive'}">
+      <td><strong>${s.name}</strong> ${inactive}</td>
+      <td><span class="role-badge rb-${s.role}">${s.role}</span></td>
+      <td>${skills || '<span style="color:#cbd5e0">none</span>'}</td>
+      <td>$${s.hourly_cost}/h · ${s.max_weekly_hours}h max</td>
+      <td style="white-space:nowrap;display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="openEditForm('${s.staff_id}')">Edit</button>
+        ${deactBtn}
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('staffListWrap').innerHTML = `
+    <table class="staff-list-table">
+      <thead><tr><th>Name</th><th>Role</th><th>Skills</th><th>Pay & Hours</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STAFF TAB — ADD / EDIT FORM
+// ═══════════════════════════════════════════════════════════════════════════
+function buildSkillsGrid() {
+  const catalogue = RULES.skill_catalogue || [];
+  document.getElementById('skillsGrid').innerHTML = catalogue.map(sk =>
+    `<label class="skill-check" id="sk-${sk}">
+      <input type="checkbox" value="${sk}" onchange="this.closest('label').classList.toggle('checked',this.checked)"> ${sk}
+    </label>`
+  ).join('');
+}
+
+function toggleProviderField() {
+  const role = document.getElementById('fRole').value;
+  document.getElementById('providerIdField').style.display =
+    (role==='dentist'||role==='hygienist') ? '' : 'none';
+}
+
+function openAddForm() {
+  document.getElementById('formTitle').textContent = 'Add Staff Member';
+  document.getElementById('editingId').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fRole').value = 'assistant';
+  document.getElementById('fProviderId').value = '';
+  document.getElementById('fCost').value = 30;
+  document.getElementById('fMaxHours').value = 40;
+  document.getElementById('fOtHours').value = 40;
+  toggleProviderField();
+  // Clear skills
+  document.querySelectorAll('#skillsGrid input').forEach(cb => {
+    cb.checked = false;
+    cb.closest('label').classList.remove('checked');
+  });
+  // Clear pattern
+  document.querySelectorAll('#patternGrid input').forEach(cb => cb.checked = false);
+  document.getElementById('staffForm').classList.add('open');
+  document.getElementById('staffForm').scrollIntoView({behavior:'smooth'});
+}
+
+function openEditForm(staffId) {
+  const s = STAFF_RAW.find(x => x.staff_id === staffId);
+  if (!s) return;
+  document.getElementById('formTitle').textContent = `Edit — ${s.name}`;
+  document.getElementById('editingId').value = staffId;
+  document.getElementById('fName').value = s.name;
+  document.getElementById('fRole').value = s.role;
+  document.getElementById('fProviderId').value = s.provider_id || '';
+  document.getElementById('fCost').value = s.hourly_cost || 30;
+  document.getElementById('fMaxHours').value = s.max_weekly_hours || 40;
+  document.getElementById('fOtHours').value = s.overtime_threshold || s.max_weekly_hours || 40;
+  toggleProviderField();
+  // Skills
+  const skills = s.skills || [];
+  document.querySelectorAll('#skillsGrid input').forEach(cb => {
+    cb.checked = skills.includes(cb.value);
+    cb.closest('label').classList.toggle('checked', cb.checked);
+  });
+  // Pattern
+  document.querySelectorAll('#patternGrid input').forEach(cb => cb.checked = false);
+  (s.normal_pattern || []).forEach(([day, part]) => {
+    const cb = document.querySelector(`#patternGrid input[data-day="${day}"][data-part="${part}"]`);
+    if (cb) cb.checked = true;
+  });
+  document.getElementById('staffForm').classList.add('open');
+  document.getElementById('staffForm').scrollIntoView({behavior:'smooth'});
+}
+
+function closeForm() {
+  document.getElementById('staffForm').classList.remove('open');
+}
+
+async function saveStaff() {
+  const editingId = document.getElementById('editingId').value;
+  const name      = document.getElementById('fName').value.trim();
+  const role      = document.getElementById('fRole').value;
+  if (!name) { alert('Name is required.'); return; }
+
+  const skills = [...document.querySelectorAll('#skillsGrid input:checked')].map(cb => cb.value);
+  const pattern = [...document.querySelectorAll('#patternGrid input:checked')].map(cb =>
+    [parseInt(cb.dataset.day), cb.dataset.part]
+  );
+  const provId = document.getElementById('fProviderId').value;
+  const body = {
+    name,
+    role,
+    provider_id:        provId ? parseInt(provId) : null,
+    skills,
+    hourly_cost:        parseFloat(document.getElementById('fCost').value),
+    max_weekly_hours:   parseFloat(document.getElementById('fMaxHours').value),
+    overtime_threshold: parseFloat(document.getElementById('fOtHours').value),
+    normal_pattern:     pattern,
+    active:             true,
+  };
+
+  try {
+    const url    = editingId ? `${API}/api/staff/${editingId}` : `${API}/api/staff`;
+    const method = editingId ? 'PUT' : 'POST';
+    const res    = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if (!res.ok) { const e=await res.json(); alert(e.detail); return; }
+    await refreshStaff();
+    closeForm();
+  } catch(e) { alert(e.message); }
+}
+
+async function deactivateStaff(staffId, name) {
+  if (!confirm(`Deactivate ${name}? They will no longer appear in roster generation.`)) return;
+  await fetch(`${API}/api/staff/${staffId}`, {method:'DELETE'});
+  await refreshStaff();
+}
+
+async function reactivateStaff(staffId) {
+  const s = STAFF_RAW.find(x => x.staff_id === staffId);
+  if (!s) return;
+  await fetch(`${API}/api/staff/${staffId}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...s, active:true, normal_pattern: s.normal_pattern||[]}),
+  });
+  await refreshStaff();
+}
+
+async function refreshStaff() {
+  const [sc, sr] = await Promise.all([
+    fetch(`${API}/api/config/staff`).then(r=>r.json()),
+    fetch(`${API}/api/staff`).then(r=>r.json()),
+  ]);
+  STAFF     = sc.staff;
+  STAFF_RAW = sr.staff;
+  renderStaffList();
+  renderPreferences();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STAFF TAB — DENTIST PREFERENCES
+// ═══════════════════════════════════════════════════════════════════════════
+function renderPreferences() {
+  const dentists   = STAFF_RAW.filter(s => s.role==='dentist' && s.active!==false);
+  const assistants = STAFF_RAW.filter(s => s.role==='assistant' && s.active!==false);
+  const prefs      = RULES.dentist_preferences || {};
+
+  const asstOpts = `<option value="">— none —</option>` +
+    assistants.map(a=>`<option value="${a.staff_id}">${a.name}</option>`).join('');
+
+  const rows = dentists.map(d => {
+    const dp = prefs[d.staff_id] || [];
+    const selects = [0,1,2].map(i => {
+      const val = dp[i] || '';
+      return `<select data-dentist="${d.staff_id}" data-rank="${i}">
+        ${asstOpts.replace(`value="${val}"`,`value="${val}" selected`)}
+      </select>`;
+    }).join('');
+    return `<tr>
+      <td><strong>${d.name}</strong></td>
+      <td>${selects}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('preferencesWrap').innerHTML = `
+    <table class="pref-table">
+      <thead><tr><th>Dentist</th><th>1st Choice &nbsp; 2nd Choice &nbsp; 3rd Choice</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function savePreferences() {
+  const preferences = {};
+  document.querySelectorAll('[data-dentist]').forEach(sel => {
+    const dId = sel.dataset.dentist;
+    if (!preferences[dId]) preferences[dId] = [];
+    preferences[dId].push(sel.value);
+  });
+  // Remove empty slots and deduplicate
+  Object.keys(preferences).forEach(k => {
+    preferences[k] = [...new Set(preferences[k].filter(Boolean))];
+    if (!preferences[k].length) delete preferences[k];
+  });
+  await fetch(`${API}/api/rules/preferences`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({preferences}),
+  });
+  RULES.dentist_preferences = preferences;
+  flashBanner('prefBanner');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STAFF TAB — PROCEDURE RULES
+// ═══════════════════════════════════════════════════════════════════════════
+function renderProcedures() {
+  const procMap   = RULES.procedure_skill_map || {};
+  const catalogue = RULES.skill_catalogue || [];
+
+  const rows = Object.entries(procMap).map(([proc, skills]) =>
+    procedureRow(proc, skills, catalogue)
+  ).join('');
+
+  document.getElementById('proceduresWrap').innerHTML = `
+    <table class="proc-table" id="procTable">
+      <thead><tr><th style="min-width:180px">Procedure</th><th>Required Skills</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function procedureRow(proc, skills, catalogue) {
+  const cat = catalogue.length ? catalogue : (RULES.skill_catalogue||[]);
+  const checks = cat.map(sk => {
+    const checked = skills.includes(sk) ? 'checked' : '';
+    return `<label class="skill-check ${checked?'checked':''}" style="margin-right:6px">
+      <input type="checkbox" data-proc="${proc}" value="${sk}" ${checked}
+        onchange="this.closest('label').classList.toggle('checked',this.checked)"> ${sk}
+    </label>`;
+  }).join('');
+  return `<tr data-proc="${proc}">
+    <td><strong>${proc}</strong></td>
+    <td>${checks}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="removeProcedureRow('${proc}')">Remove</button></td>
+  </tr>`;
+}
+
+function addProcedureRow() {
+  const name = document.getElementById('newProcName').value.trim();
+  if (!name) return;
+  const tbody = document.querySelector('#procTable tbody');
+  const row = document.createElement('tr');
+  row.dataset.proc = name;
+  row.innerHTML = procedureRow(name, [], RULES.skill_catalogue||[]);
+  tbody.insertAdjacentHTML('beforeend', procedureRow(name, [], RULES.skill_catalogue||[]).replace('<tr ','<tr '));
+  // simpler: just re-render with the new proc added
+  if (!RULES.procedure_skill_map) RULES.procedure_skill_map = {};
+  RULES.procedure_skill_map[name] = [];
+  renderProcedures();
+  document.getElementById('newProcName').value = '';
+}
+
+function removeProcedureRow(proc) {
+  if (!confirm(`Remove procedure "${proc}"?`)) return;
+  delete RULES.procedure_skill_map[proc];
+  renderProcedures();
+}
+
+async function saveProcedures() {
+  const procedure_skill_map = {};
+  document.querySelectorAll('#procTable tbody tr[data-proc]').forEach(row => {
+    const proc = row.dataset.proc;
+    const skills = [...row.querySelectorAll('input[type=checkbox]:checked')].map(cb=>cb.value);
+    procedure_skill_map[proc] = skills;
+  });
+  await fetch(`${API}/api/rules/procedures`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({procedure_skill_map}),
+  });
+  RULES.procedure_skill_map = procedure_skill_map;
+  flashBanner('procBanner');
+}
+
+function flashBanner(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 init();
 </script>
 </body>
