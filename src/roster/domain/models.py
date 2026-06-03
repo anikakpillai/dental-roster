@@ -87,6 +87,8 @@ class Assignment:
 @dataclass
 class Warning:
     """Something the practice manager needs to know about."""
-    session_key: str
-    severity:    Severity
-    message:     str
+    session_key:  str
+    severity:     Severity
+    message:      str
+    warning_type: str = "general"
+    staff_id:     Optional[str] = None

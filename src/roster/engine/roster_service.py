@@ -14,6 +14,7 @@ from roster.domain.models import Assignment, Role, StaffMember
 from roster.engine.assigner import AssignResult, Vacancy, assign
 from roster.engine.availability import WeeklyInput, availability_matrix, build_sessions
 from roster.engine.demand import SessionDemand, build_demand
+from roster.engine.warnings import generate_warnings
 
 
 @dataclass
@@ -34,6 +35,7 @@ class Roster:
     assignments: list[Assignment]
     vacancies:   list[Vacancy]
     hours:       list[StaffHours]
+    warnings:    list = field(default_factory=list)
     notes:       list[str] = field(default_factory=list)
 
     # ── Convenience helpers ──
@@ -135,6 +137,9 @@ def build_roster(
     if result.vacancies:
         notes.append(f"{len(result.vacancies)} unfilled slot(s) — manual assignment required.")
 
+        # ── Stage 5: Warnings ──
+    warnings = generate_warnings(cfg, sessions, demand, av, result, weekly)
+
     return Roster(
         week_start=week_start,
         week_end=week_end,
@@ -142,4 +147,5 @@ def build_roster(
         vacancies=result.vacancies,
         hours=hours,
         notes=notes,
+        warnings=warnings,
     )
