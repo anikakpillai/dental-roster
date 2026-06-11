@@ -1,32 +1,33 @@
 """
 Stage 4 of the engine: Assignment.
 
-The final step — picks the best available assistant for each dentist
-slot and produces a complete roster.
+Order of assignment per dentist slot:
+  1. Fixed assistants (hard rule) — assigned if available, else fall back + flag
+  2. Remaining slots filled by scoring
+The required count = max(procedure-based count, number of fixed assistants).
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
 
 from roster.config.schema import AppConfig
 from roster.domain.models import Assignment, Role, Session, StaffMember
-from roster.engine.availability import Availability, WeeklyInput, availability_matrix
-from roster.engine.demand import SessionDemand, build_demand
+from roster.engine.availability import Availability, WeeklyInput
+from roster.engine.demand import SessionDemand
 from roster.engine.scoring import score_candidate
 
 
 @dataclass
 class Vacancy:
-    """A slot that couldn't be filled."""
-    session_key:       str
+    session_key:        str
     serves_provider_id: int
-    reason:            str
+    reason:             str
 
 
 @dataclass
 class AssignResult:
-    assignments: list[Assignment] = field(default_factory=list)
-    vacancies:   list[Vacancy]   = field(default_factory=list)
-    running_hours: dict[str, float] = field(default_factory=dict)
+    assignments:   list[Assignment]   = field(default_factory=list)
+    vacancies:     list[Vacancy]      = field(default_factory=list)
+    running_hours: dict[str, float]   = field(default_factory=dict)
 
 
 def assign(
@@ -37,146 +38,144 @@ def assign(
     weekly: WeeklyInput | None = None,
     preassigned: list[Assignment] | None = None,
 ) -> AssignResult:
-    """
-    Core assignment loop.
-    Processes sessions in chronological order so running_hours
-    accurately reflects fairness across the week.
-    """
     weekly = weekly or WeeklyInput()
     result = AssignResult()
 
-    # Seed running hours from any pre-assigned/locked slots
     for a in (preassigned or []):
-        result.running_hours[a.staff_id] = (
-            result.running_hours.get(a.staff_id, 0.0) + a.hours
-        )
+        result.running_hours[a.staff_id] = result.running_hours.get(a.staff_id, 0.0) + a.hours
         result.assignments.append(a)
 
-    # Track who's paired with which dentist this week (for continuity scoring)
     dentist_assistant_pairing: dict[int, str] = {}
-
-    assistants = cfg.staff_by_role(Role.ASSISTANT)
+    assistants      = cfg.staff_by_role(Role.ASSISTANT)
     dentist_by_prov = cfg.dentist_by_provider_id()
-    session_defs = {sd.daypart: sd for sd in cfg.clinic.sessions}
+    hyg_by_prov     = cfg.hygienist_by_provider_id()
+    staff_by_id     = cfg.staff_by_id()
+    session_defs    = {sd.daypart: sd for sd in cfg.clinic.sessions}
+
+    def _is_free(staff_id, key):
+        """Available this session and not already assigned to anything."""
+        av = av_matrix.get((staff_id, key))
+        if not av or not av.available:
+            return None
+        if any(a.session_key == key and a.staff_id == staff_id for a in result.assignments):
+            return None
+        return av
 
     for session in sessions:
         key = session.key
         d = demand.get(key)
         if not d or d.appointment_count == 0:
             continue
+        sd = session_defs[session.daypart]
+        session_hours = sd.hours
 
-        # ── Assign dentists (they're present if OD has bookings) ──
+        # ── Dentists ──
         for prov_id in d.active_dentist_provider_ids:
             dentist = dentist_by_prov.get(prov_id)
             if not dentist:
-                continue  # unknown provider — warning generated later
-            sd = session_defs[session.daypart]
-            hours = sd.hours
-
-            # Skip if already locked/preassigned
-            already = [a for a in result.assignments
-                       if a.session_key == key and a.staff_id == dentist.staff_id]
-            if already:
                 continue
-
+            if any(a.session_key == key and a.staff_id == dentist.staff_id for a in result.assignments):
+                continue
             result.assignments.append(Assignment(
-                session_key=key,
-                staff_id=dentist.staff_id,
-                staff_name=dentist.name,
-                role=Role.DENTIST,
-                hours=hours,
+                session_key=key, staff_id=dentist.staff_id, staff_name=dentist.name,
+                role=Role.DENTIST, hours=session_hours,
                 reasons=["active in Open Dental this session"],
             ))
-            result.running_hours[dentist.staff_id] = (
-                result.running_hours.get(dentist.staff_id, 0.0) + hours
-            )
+            result.running_hours[dentist.staff_id] = result.running_hours.get(dentist.staff_id, 0.0) + session_hours
 
-        # ── Assign hygienists ──
-        hyg_by_prov = cfg.hygienist_by_provider_id()
+        # ── Hygienists ──
         for prov_id in d.hygienist_provider_ids:
             hyg = hyg_by_prov.get(prov_id)
             if not hyg:
                 continue
-            sd = session_defs[session.daypart]
-            already = [a for a in result.assignments
-                       if a.session_key == key and a.staff_id == hyg.staff_id]
-            if already:
+            if any(a.session_key == key and a.staff_id == hyg.staff_id for a in result.assignments):
                 continue
             result.assignments.append(Assignment(
-                session_key=key,
-                staff_id=hyg.staff_id,
-                staff_name=hyg.name,
-                role=Role.HYGIENIST,
-                hours=sd.hours,
+                session_key=key, staff_id=hyg.staff_id, staff_name=hyg.name,
+                role=Role.HYGIENIST, hours=session_hours,
                 reasons=["active in Open Dental this session"],
             ))
-            result.running_hours[hyg.staff_id] = (
-                result.running_hours.get(hyg.staff_id, 0.0) + sd.hours
-            )
+            result.running_hours[hyg.staff_id] = result.running_hours.get(hyg.staff_id, 0.0) + session_hours
 
-        # ── Assign assistants — one per active dentist ──
+        # ── Assistants ──
         for prov_id in sorted(d.active_dentist_provider_ids):
-            # Check if already locked
-            locked = [a for a in result.assignments
-                      if a.session_key == key
-                      and a.role == Role.ASSISTANT
-                      and a.serves_provider_id == prov_id]
-            if locked:
-                continue
+            dentist     = dentist_by_prov.get(prov_id)
+            dentist_sid = dentist.staff_id if dentist else None
+            dentist_name = dentist.name if dentist else f"Provider {prov_id}"
 
-            sd = session_defs[session.daypart]
-            session_hours = sd.hours
+            fixed      = cfg.rules.fixed_assistants.get(dentist_sid, []) if dentist_sid else []
+            proc_count = d.assistant_count_by_provider.get(prov_id, cfg.clinic.assistants_per_dentist)
+            count      = max(proc_count, len(fixed))
+            extra_needs_skill = d.extra_needs_skill_by_provider.get(prov_id, False)
 
-            # Score all available assistants
-            candidates = []
-            for asst in assistants:
-                av = av_matrix.get((asst.staff_id, key))
-                if not av or not av.available:
+            already_serving = [a for a in result.assignments
+                               if a.session_key == key and a.role == Role.ASSISTANT
+                               and a.serves_provider_id == prov_id]
+            already_ids = {a.staff_id for a in already_serving}
+            slots_filled = len(already_serving)
+
+            # ── Step 1: fixed assistants ──
+            for fid in fixed:
+                if slots_filled >= count:
+                    break
+                if fid in already_ids:
                     continue
-
-                # Skip if already assigned elsewhere this session
-                in_use = any(
-                    a.session_key == key and a.staff_id == asst.staff_id
-                    for a in result.assignments
-                )
-                if in_use:
+                fstaff = staff_by_id.get(fid)
+                if not fstaff:
                     continue
-
-                # Skip if would exceed hours cap (when overtime disabled)
-                projected = result.running_hours.get(asst.staff_id, 0.0) + session_hours
-                if not cfg.rules.allow_overtime and projected > asst.max_weekly_hours:
-                    continue
-
-                sc = score_candidate(
-                    asst, av, d, prov_id, cfg,
-                    result.running_hours, dentist_assistant_pairing
-                )
-                candidates.append((sc, asst, av))
-
-            if not candidates:
-                result.vacancies.append(Vacancy(
-                    session_key=key,
+                av = _is_free(fid, key)
+                if av is None:
+                    continue  # unavailable — warnings stage flags this gap via vacancy below
+                is_primary = (slots_filled == 0)
+                result.assignments.append(Assignment(
+                    session_key=key, staff_id=fid, staff_name=fstaff.name,
+                    role=Role.ASSISTANT, hours=min(session_hours, av.available_hours),
+                    reasons=[f"fixed assistant for {dentist_name}"],
                     serves_provider_id=prov_id,
-                    reason="no available assistant found",
+                    support_role="chairside" if is_primary else "prep",
                 ))
-                continue
+                result.running_hours[fid] = result.running_hours.get(fid, 0.0) + session_hours
+                if is_primary:
+                    dentist_assistant_pairing[prov_id] = fid
+                slots_filled += 1
+                already_ids.add(fid)
 
-            # Pick highest scorer
-            candidates.sort(key=lambda x: x[0].total, reverse=True)
-            best_score, best_asst, best_av = candidates[0]
+            # ── Step 2: fill remaining slots by scoring ──
+            for slot in range(slots_filled, count):
+                is_primary = (slot == 0)
+                skill_override = None if (is_primary or extra_needs_skill) else set()
 
-            result.assignments.append(Assignment(
-                session_key=key,
-                staff_id=best_asst.staff_id,
-                staff_name=best_asst.name,
-                role=Role.ASSISTANT,
-                hours=min(session_hours, best_av.available_hours),
-                reasons=best_score.reasons,
-                serves_provider_id=prov_id,
-            ))
-            result.running_hours[best_asst.staff_id] = (
-                result.running_hours.get(best_asst.staff_id, 0.0) + session_hours
-            )
-            dentist_assistant_pairing[prov_id] = best_asst.staff_id
+                candidates = []
+                for asst in assistants:
+                    av = _is_free(asst.staff_id, key)
+                    if av is None:
+                        continue
+                    projected = result.running_hours.get(asst.staff_id, 0.0) + session_hours
+                    if not cfg.rules.allow_overtime and projected > asst.max_weekly_hours:
+                        continue
+                    sc = score_candidate(asst, av, d, prov_id, cfg,
+                                         result.running_hours, dentist_assistant_pairing,
+                                         required_skills_override=skill_override)
+                    candidates.append((sc, asst, av))
+
+                if not candidates:
+                    role_note = "" if is_primary else " (prep role)"
+                    result.vacancies.append(Vacancy(
+                        session_key=key, serves_provider_id=prov_id,
+                        reason=f"no available assistant{role_note}",
+                    ))
+                    continue
+
+                candidates.sort(key=lambda x: x[0].total, reverse=True)
+                best_score, best_asst, best_av = candidates[0]
+                result.assignments.append(Assignment(
+                    session_key=key, staff_id=best_asst.staff_id, staff_name=best_asst.name,
+                    role=Role.ASSISTANT, hours=min(session_hours, best_av.available_hours),
+                    reasons=best_score.reasons, serves_provider_id=prov_id,
+                    support_role="chairside" if is_primary else "prep",
+                ))
+                result.running_hours[best_asst.staff_id] = result.running_hours.get(best_asst.staff_id, 0.0) + session_hours
+                if is_primary:
+                    dentist_assistant_pairing[prov_id] = best_asst.staff_id
 
     return result

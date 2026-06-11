@@ -41,7 +41,8 @@ class RulesConfig:
     procedure_skill_map: dict[str, list[str]] = field(default_factory=dict)
     skill_catalogue: list[str] = field(default_factory=list)
     allow_overtime: bool = True
-
+    assistant_requirements: dict[str, dict] = field(default_factory=dict)
+    fixed_assistants: dict[str, list[str]] = field(default_factory=dict)
 
 @dataclass
 class AppConfig:

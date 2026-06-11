@@ -82,6 +82,7 @@ class Assignment:
     role:        Role
     hours:       float
     serves_provider_id: Optional[int]  = None
+    support_role:       Optional[str]  = None
     reasons:     list[str] = field(default_factory=list)  # why this person was chosen
 
 

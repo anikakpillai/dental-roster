@@ -72,6 +72,8 @@ def load_config_dir(config_dir: str | Path) -> AppConfig:
         procedure_skill_map=rules_raw.get("procedure_skill_map", {}),
         skill_catalogue=rules_raw.get("skill_catalogue", []),
         allow_overtime=rules_raw.get("allow_overtime", True),
+        assistant_requirements=rules_raw.get("assistant_requirements", {}),
+        fixed_assistants=rules_raw.get("fixed_assistants", {}),
     )
 
     cfg = AppConfig(clinic=clinic, staff=staff, rules=rules)

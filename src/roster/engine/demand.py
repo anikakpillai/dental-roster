@@ -1,7 +1,8 @@
 """
 Stage 2 of the engine: Demand.
 
-Answers: "For each session, what work exists and what skills are required?"
+For each session, derive what work exists, what skills are required,
+and how many assistants each dentist needs.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -13,25 +14,16 @@ from roster.domain.models import AppointmentMeta, Session
 @dataclass
 class SessionDemand:
     session_key: str
-
-    # Which dentist provider IDs have appointments this session
     active_dentist_provider_ids: set[int] = field(default_factory=set)
-
-    # Which hygienist provider IDs have appointments this session
     hygienist_provider_ids: set[int] = field(default_factory=set)
-
-    # Skills required per dentist provider ID
-    # e.g. {1: {"implant", "surgery"}, 2: set()}
     skills_by_provider: dict[int, set[str]] = field(default_factory=dict)
-
-    # Total assistant-minutes needed across all appointments
     assistant_minutes: int = 0
-
-    # Operatories in use (for overstaffing checks)
     operatories_in_use: set[str] = field(default_factory=set)
-
-    # Raw appointment count
     appointment_count: int = 0
+    # How many assistants each provider needs this session (default 1)
+    assistant_count_by_provider: dict[int, int] = field(default_factory=dict)
+    # Whether the extra (prep) assistant also needs the procedure skill
+    extra_needs_skill_by_provider: dict[int, bool] = field(default_factory=dict)
 
     @property
     def requires_assistant(self) -> bool:
@@ -47,48 +39,50 @@ def build_demand(
     sessions: list[Session],
     appointments: list[AppointmentMeta],
 ) -> dict[str, SessionDemand]:
-    """
-    Group appointments into sessions and derive demand for each.
-    Returns a dict keyed by session_key.
-    """
-    # Initialise empty demand for every session
     demand: dict[str, SessionDemand] = {
         s.key: SessionDemand(session_key=s.key) for s in sessions
     }
-
-    # Map procedure categories to required skills (from rules config)
     proc_skill_map = cfg.rules.procedure_skill_map
+    asst_req       = cfg.rules.assistant_requirements
 
     for appt in appointments:
         key = appt.session_key
         if key not in demand:
-            # Appointment falls outside any defined session — skip
             continue
-
         d = demand[key]
         d.appointment_count += 1
         d.assistant_minutes += appt.assistant_min
-
         if appt.operatory:
             d.operatories_in_use.add(appt.operatory)
 
-        # Dentist appointment
         if appt.provider_id is not None:
-            d.active_dentist_provider_ids.add(appt.provider_id)
+            prov = appt.provider_id
+            d.active_dentist_provider_ids.add(prov)
 
-            # Map procedure to required skills
             required_skills = set()
+            count = 1
+            extra_skill = False
             if appt.procedure_category:
+                pc = appt.procedure_category.lower()
                 for proc, skills in proc_skill_map.items():
-                    if proc.lower() in appt.procedure_category.lower():
+                    if proc.lower() in pc:
                         required_skills.update(skills)
+                for proc, req in asst_req.items():
+                    if proc.lower() in pc:
+                        count = max(count, int(req.get("count", 1)))
+                        if req.get("extra_needs_skill", False):
+                            extra_skill = True
 
-            # Merge skills for this provider (dentist may have multiple appts)
-            if appt.provider_id not in d.skills_by_provider:
-                d.skills_by_provider[appt.provider_id] = set()
-            d.skills_by_provider[appt.provider_id].update(required_skills)
+            if prov not in d.skills_by_provider:
+                d.skills_by_provider[prov] = set()
+            d.skills_by_provider[prov].update(required_skills)
 
-        # Hygienist appointment
+            d.assistant_count_by_provider[prov] = max(
+                d.assistant_count_by_provider.get(prov, 1), count
+            )
+            if extra_skill:
+                d.extra_needs_skill_by_provider[prov] = True
+
         if appt.hygienist_id is not None:
             d.hygienist_provider_ids.add(appt.hygienist_id)
 

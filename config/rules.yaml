@@ -16,3 +16,9 @@ procedure_skill_map:
 skill_catalogue: [general, implant, surgery, endo, ortho, restorative, hygiene]
 
 allow_overtime: true
+
+# Dentists who always work with specific assistants (hard rule, overrides scoring).
+# The number of fixed assistants also sets how many that dentist gets.
+# If a fixed assistant is unavailable that day, the engine falls back to scoring + warns.
+fixed_assistants:
+  D_MK: [A_SARA, A_MAYA]
