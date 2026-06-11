@@ -1,30 +1,41 @@
-# Which assistants each dentist prefers, in order of preference.
-dentist_preferences:
-  D_MK:    [A_SARA, A_MAYA]
-  D_MARIO: [A_MAYA, A_LENA]
-  D_KIRAN: [A_TOM, A_LENA]
+# ============================================================
+# UNITY DENTAL — RULES
+# ============================================================
 
-# Map a procedure category (from Open Dental) to required assistant skill(s).
+# Each dentist's preferred assistants, in order (used when no fixed assistant).
+dentist_preferences:
+  D_PILLAI: [A_RISHABH, A_RAJAT]
+  D_MARIO:  [A_KALPANA, A_RAJAT, A_LIKHITHA, A_PARI, A_RISHABH]
+  D_LALEH:  [A_LIKHITHA, A_PARI, A_RISHABH]
+
+# Assistants ALWAYS paired with a dentist (overrides preferences).
+fixed_assistants:
+  D_PILLAI: [A_RISHABH, A_RAJAT]    # Dr Pillai always has both
+
+# Default number of assistants per dentist.
+assistant_count_by_dentist:
+  D_PILLAI: 2
+  D_MARIO:  1     # becomes 2 for surgery/implant automatically (see below);
+                  # large-value / >8h / simultaneous-booking days → bump manually
+  D_LALEH:  1
+
+# Procedures that need a 2nd assistant, applied from Open Dental procedure type.
+assistant_requirements:
+  Surgery:
+    count: 2
+    extra_needs_skill: false        # 2nd assistant just preps
+  Implant:
+    count: 2
+    extra_needs_skill: true         # 2nd assistant also chairside (needs implant skill)
+
+# Which skill an assistant needs to assist each procedure type.
 procedure_skill_map:
-  Implant:      [implant]
-  Surgery:      [surgery]
-  Endodontics:  [endo]
+  Implant: [implant]
+  Surgery: [surgery]
+  Endodontics: [endo]
   Orthodontics: [ortho]
   Hygiene/Recall: [hygiene]
 
-# Master list of valid skills (used for validation).
 skill_catalogue: [general, implant, surgery, endo, ortho, restorative, hygiene]
 
 allow_overtime: true
-
-# Dentists who always work with specific assistants (hard rule, overrides scoring).
-# The number of fixed assistants also sets how many that dentist gets.
-# If a fixed assistant is unavailable that day, the engine falls back to scoring + warns.
-fixed_assistants:
-  D_MK: [A_SARA, A_MAYA]
-
-# Default number of assistants a dentist gets, independent of procedure.
-# The effective count is the maximum of: procedure rule, fixed-assistant count,
-# and this per-dentist default.
-assistant_count_by_dentist:
-  D_MARIO: 1

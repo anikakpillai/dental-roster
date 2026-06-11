@@ -1,0 +1,55 @@
+staff:
+  # ── Dentists (provider_id matches Open Dental ProvNum) ──
+  - staff_id: D_MK
+    name: "Dr MK Pillai"
+    role: dentist
+    provider_id: 1
+    skills: [general, implant, surgery]
+
+  - staff_id: D_MARIO
+    name: "Dr Mario Rossi"
+    role: dentist
+    provider_id: 2
+    skills: [general, restorative]
+
+  - staff_id: D_KIRAN
+    name: "Dr Kiran Patel"
+    role: dentist
+    provider_id: 3
+    skills: [general, endo, ortho]
+
+  # ── Hygienist ──
+  - staff_id: H_PRIYA
+    name: "Priya Sharma"
+    role: hygienist
+    provider_id: 4
+    skills: [hygiene]
+
+  # ── Assistants (NOT in Open Dental — defined only here) ──
+  - staff_id: A_SARA
+    name: "Sara (Senior Surgical)"
+    role: assistant
+    skills: [general, implant, surgery]
+    hourly_cost: 40
+    max_weekly_hours: 40
+
+  - staff_id: A_LENA
+    name: "Lena (Ortho)"
+    role: assistant
+    skills: [general, ortho]
+    hourly_cost: 32
+    max_weekly_hours: 40
+
+  - staff_id: A_TOM
+    name: "Tom (Part-Time)"
+    role: assistant
+    skills: [general, endo]
+    hourly_cost: 25
+    max_weekly_hours: 24
+
+  - staff_id: A_MAYA
+    name: "Maya (General)"
+    role: assistant
+    skills: [general]
+    hourly_cost: 28
+    max_weekly_hours: 40
