@@ -71,15 +71,14 @@ class Roster:
 def _compute_hours(
     staff: StaffMember,
     running_hours: dict[str, float],
+    days_worked: int = 0,
 ) -> StaffHours:
-    total = running_hours.get(staff.staff_id, 0.0)
+    base   = running_hours.get(staff.staff_id, 0.0)
+    buffer = round((staff.arrival_buffer_min / 60.0) * days_worked, 2)
+    total  = round(base + buffer, 2)
     overtime = max(0.0, total - staff.overtime_threshold)
     regular  = min(total, staff.overtime_threshold)
-    cost = round(
-        regular  * staff.hourly_cost +
-        overtime * staff.hourly_cost * 1.5,
-        2
-    )
+    cost = round(regular * staff.hourly_cost + overtime * staff.hourly_cost * 1.5, 2)
     return StaffHours(
         staff_id=staff.staff_id,
         staff_name=staff.name,
@@ -126,9 +125,14 @@ def build_roster(
     )
 
     # ── Compute hours + cost for everyone who was assigned ──
+    days_worked: dict[str, set] = {}
+    for a in result.assignments:
+        day = a.session_key.split("|")[0]
+        days_worked.setdefault(a.staff_id, set()).add(day)
+
     assigned_ids = {a.staff_id for a in result.assignments}
     hours = [
-        _compute_hours(s, result.running_hours)
+        _compute_hours(s, result.running_hours, len(days_worked.get(s.staff_id, set())))
         for s in cfg.staff
         if s.staff_id in assigned_ids
     ]

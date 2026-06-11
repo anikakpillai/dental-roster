@@ -37,6 +37,7 @@ class StaffMember:
     max_weekly_hours:       float                 = 40.0
     overtime_threshold:     float                 = 40.0
     hourly_cost:            float                 = 30.0
+    arrival_buffer_min:     int                   = 0
     # Which (weekday, daypart) combos this person normally works.
     # Empty = available every session (typical for dentists).
     # weekday: 0=Mon, 1=Tue ... 5=Sat
