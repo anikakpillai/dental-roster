@@ -43,28 +43,30 @@ def load_config_dir(config_dir: str | Path) -> AppConfig:
     # ── Staff ──
     staff: list[StaffMember] = []
     for s in staff_raw["staff"]:
-            raw_pattern = s.get("normal_pattern", [])
-            pattern = frozenset(
+        raw_pattern = s.get("normal_pattern", [])
+        pattern = frozenset(
             (int(p[0]), DayPart(p[1]))
             for p in raw_pattern
         )
         # Default arrival buffer by role (assistants prep before first patient)
-            _role_buffer = {"assistant": 30, "reception": 90}
-            arrival_buffer = int(s.get("arrival_buffer_min",
+        _role_buffer = {"assistant": 30, "reception": 90}
+        arrival_buffer = int(s.get("arrival_buffer_min",
                                    _role_buffer.get(s["role"], 0)))
+        recurring_off = frozenset(int(x) for x in s.get("recurring_days_off", []))
 
-            staff.append(StaffMember(
-                staff_id=s["staff_id"],
-                name=s["name"],
-                role=Role(s["role"]),
-                provider_id=s.get("provider_id"),
-                skills=frozenset(s.get("skills", [])),
-                hourly_cost=float(s.get("hourly_cost", 30.0)),
-                max_weekly_hours=float(s.get("max_weekly_hours", 40.0)),
-                overtime_threshold=float(s.get("overtime_threshold", s.get("max_weekly_hours", 40.0))),
-                arrival_buffer_min=arrival_buffer,
-                normal_pattern=pattern,
-            ))
+        staff.append(StaffMember(
+            staff_id=s["staff_id"],
+            name=s["name"],
+            role=Role(s["role"]),
+            provider_id=s.get("provider_id"),
+            skills=frozenset(s.get("skills", [])),
+            hourly_cost=float(s.get("hourly_cost", 30.0)),
+            max_weekly_hours=float(s.get("max_weekly_hours", 40.0)),
+            overtime_threshold=float(s.get("overtime_threshold", s.get("max_weekly_hours", 40.0))),
+            arrival_buffer_min=arrival_buffer,
+            recurring_days_off=recurring_off,
+            normal_pattern=pattern,
+        ))
 
     # ── Rules ──
     rules = RulesConfig(

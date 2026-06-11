@@ -90,6 +90,9 @@ def resolve_availability(
     # ── Hard block: day off ──
     if weekly.is_off(staff.staff_id, session.date):
         return Availability(staff.staff_id, session.key, False, 0.0, "day off")
+    # ── Hard block: recurring weekly day off (permanent pattern) ──
+    if session.date.weekday() in staff.recurring_days_off:
+        return Availability(staff.staff_id, session.key, False, 0.0, "recurring day off")
 
     # ── Normal pattern gate (assistants/hygienists only) ──
     # Empty pattern = available every session (dentists)
