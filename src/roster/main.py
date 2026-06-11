@@ -58,6 +58,9 @@ class WeeklyExceptionsInput(BaseModel):
     notes:          list[str]              = []
 
 class StaffInput(BaseModel):
+    recurring_days_off: list[int] = []
+    arrival_buffer_min: int | None = None
+    max_daily_hours: float | None = None
     name:               str
     role:               str
     provider_id:        Optional[int]   = None
@@ -97,7 +100,7 @@ def _serialise_roster(roster) -> dict:
             {"session_key": a.session_key, "staff_id": a.staff_id,
              "staff_name": a.staff_name, "role": a.role.value,
              "hours": a.hours, "serves_provider_id": a.serves_provider_id,
-             "reasons": a.reasons}
+             "support_role": a.support_role, "reasons": a.reasons}
             for a in roster.assignments
         ],
         "vacancies": [
@@ -114,6 +117,12 @@ def _serialise_roster(roster) -> dict:
         ],
         "notes":       roster.notes,
         "total_cost":  roster.total_cost,
+        "warnings": [
+            {"session_key": w.session_key, "severity": w.severity.value,
+             "warning_type": w.warning_type, "staff_id": w.staff_id,
+             "message": w.message}
+            for w in getattr(roster, "warnings", [])
+        ],
     }
 
 def _generate_staff_id(name: str, role: str, existing: set[str]) -> str:
@@ -196,6 +205,9 @@ def add_staff(body: StaffInput):
     if body.provider_id        is not None: entry["provider_id"]        = body.provider_id
     if body.overtime_threshold is not None: entry["overtime_threshold"] = body.overtime_threshold
     if body.normal_pattern:                 entry["normal_pattern"]     = body.normal_pattern
+    if body.recurring_days_off:             entry["recurring_days_off"] = body.recurring_days_off
+    if body.arrival_buffer_min is not None: entry["arrival_buffer_min"] = body.arrival_buffer_min
+    if body.max_daily_hours    is not None: entry["max_daily_hours"]    = body.max_daily_hours
 
     staff_list.append(entry)
     save_staff_raw(CONFIG_DIR, staff_list)
@@ -218,6 +230,9 @@ def update_staff(staff_id: str, body: StaffInput):
             if body.provider_id        is not None: updated["provider_id"]        = body.provider_id
             if body.overtime_threshold is not None: updated["overtime_threshold"] = body.overtime_threshold
             updated["normal_pattern"] = body.normal_pattern
+            if body.recurring_days_off:             updated["recurring_days_off"] = body.recurring_days_off
+            if body.arrival_buffer_min is not None: updated["arrival_buffer_min"] = body.arrival_buffer_min
+            if body.max_daily_hours    is not None: updated["max_daily_hours"]    = body.max_daily_hours
             staff_list[i] = updated
             save_staff_raw(CONFIG_DIR, staff_list)
             return {"staff_id": staff_id, "staff": updated}
@@ -243,6 +258,8 @@ def get_rules():
         "dentist_preferences":  r.get("dentist_preferences", {}),
         "procedure_skill_map":  r.get("procedure_skill_map", {}),
         "skill_catalogue":      r.get("skill_catalogue", []),
+        "fixed_assistants":     r.get("fixed_assistants", {}),
+        "assistant_count_by_dentist": r.get("assistant_count_by_dentist", {}),
     }
 
 @app.put("/api/rules/preferences")
@@ -258,3 +275,26 @@ def update_procedures(body: ProcedureRulesInput):
     rules["procedure_skill_map"] = body.procedure_skill_map
     save_rules_raw(CONFIG_DIR, rules)
     return {"procedure_skill_map": body.procedure_skill_map}
+
+class FixedAssistantsInput(BaseModel):
+    fixed_assistants: dict[str, list[str]]
+
+
+@app.put("/api/rules/fixed-assistants")
+def update_fixed_assistants(body: FixedAssistantsInput):
+    rules = load_rules_raw(CONFIG_DIR)
+    rules["fixed_assistants"] = body.fixed_assistants
+    save_rules_raw(CONFIG_DIR, rules)
+    return {"fixed_assistants": body.fixed_assistants}
+
+
+class AssistantCountInput(BaseModel):
+    assistant_count_by_dentist: dict[str, int]
+
+
+@app.put("/api/rules/assistant-count")
+def update_assistant_count(body: AssistantCountInput):
+    rules = load_rules_raw(CONFIG_DIR)
+    rules["assistant_count_by_dentist"] = body.assistant_count_by_dentist
+    save_rules_raw(CONFIG_DIR, rules)
+    return {"assistant_count_by_dentist": body.assistant_count_by_dentist}

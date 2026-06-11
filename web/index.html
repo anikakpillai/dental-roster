@@ -1,864 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dental Roster — Lighthouse Dental</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a202c; }
-
-    /* ── Header ── */
-    .header { background: #0e5c4a; color: white; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-    .header h1 { font-size: 17px; font-weight: 700; }
-    .header p  { font-size: 12px; opacity: 0.75; margin-top: 2px; }
-
-    /* ── Tabs ── */
-    .tabs { background: white; border-bottom: 1px solid #e2e8f0; display: flex; padding: 0 24px; gap: 0; }
-    .tab { padding: 13px 20px; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; border: none; background: none; }
-    .tab.active { color: #0e5c4a; border-bottom: 3px solid #0e5c4a; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* ── Controls ── */
-    .controls { background: white; border-bottom: 1px solid #e2e8f0; padding: 14px 24px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; }
-    .field input, .field select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
-    .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; }
-    .btn-primary   { background: #0e5c4a; color: white; }
-    .btn-primary:hover { background: #0a4538; }
-    .btn-secondary { background: #edf2f7; color: #4a5568; }
-    .btn-danger    { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
-    .btn-sm { padding: 5px 12px; font-size: 12px; }
-
-    /* ── Exceptions ── */
-    .exc-panel { background: white; border-bottom: 1px solid #e2e8f0; }
-    .exc-toggle { width: 100%; text-align: left; padding: 11px 24px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 8px; }
-    .exc-body { padding: 0 24px 16px; display: none; }
-    .exc-body.open { display: block; }
-    .exc-section { margin-bottom: 14px; }
-    .exc-section strong { font-size: 13px; display: block; margin-bottom: 6px; }
-    .exc-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
-    .exc-row select, .exc-row input[type=date], .exc-row input[type=time] { border: 1px solid #cbd5e0; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
-    .btn-remove { background: none; border: none; color: #fc8181; cursor: pointer; font-size: 18px; line-height: 1; }
-    .btn-add { background: none; border: 1px dashed #0e5c4a; color: #0e5c4a; border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
-
-    /* ── Status ── */
-    .status { padding: 10px 24px; font-size: 13px; color: #718096; background: white; border-bottom: 1px solid #e2e8f0; min-height: 42px; display: flex; align-items: center; }
-    .status.ok  { color: #276749; }
-    .status.err { color: #c53030; }
-
-    /* ── Summary cards ── */
-    .summary { display: flex; gap: 14px; padding: 20px 24px 0; flex-wrap: wrap; }
-    .card { background: white; border-radius: 10px; padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); min-width: 140px; }
-    .card .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #a0aec0; letter-spacing: 0.5px; }
-    .card .val { font-size: 26px; font-weight: 800; color: #2d3748; margin-top: 3px; }
-    .card .sub { font-size: 11px; color: #a0aec0; margin-top: 2px; }
-
-    /* ── Vacancy / Notes ── */
-    .vacancy-banner { margin: 16px 24px 0; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #c53030; }
-    .notes { padding: 12px 24px 0; }
-    .note { background: #fffbea; border-left: 3px solid #f6ad55; padding: 9px 13px; border-radius: 0 6px 6px 0; font-size: 13px; color: #744210; margin-bottom: 6px; }
-
-    /* ── Roster Grid ── */
-    .grid-wrap { overflow-x: auto; padding: 20px 24px; }
-    .roster-table { border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); white-space: nowrap; }
-    .roster-table th, .roster-table td { border: 1px solid #e2e8f0; }
-    .roster-table thead th { background: #f7fafc; padding: 8px 12px; text-align: center; }
-    .roster-table thead th.name-col { text-align: left; min-width: 190px; }
-    .sh-day  { font-weight: 800; font-size: 13px; color: #2d3748; }
-    .sh-time { font-size: 11px; color: #718096; margin-top: 1px; }
-    .sh-part { display: inline-block; margin-top: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 9px; }
-    .part-am { background: #ebf8ff; color: #2c5282; }
-    .part-pm { background: #fefcbf; color: #744210; }
-    .roster-table tbody td.name-cell { padding: 9px 13px; font-size: 13px; font-weight: 600; border-right: 2px solid #e2e8f0; }
-    .role-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
-    .rb-dentist   { background: #ebf4ff; color: #2b6cb0; }
-    .rb-hygienist { background: #e6fffa; color: #276749; }
-    .rb-assistant { background: #fffaf0; color: #c05621; }
-    .asgn-cell { padding: 7px 9px; min-width: 120px; text-align: center; vertical-align: middle; }
-    .chip { display: inline-block; width: 100%; border-radius: 7px; padding: 5px 9px; text-align: left; font-size: 12px; }
-    .chip-dentist   { background: #ebf4ff; border: 1px solid #bee3f8; color: #2c5282; }
-    .chip-hygienist { background: #e6fffa; border: 1px solid #9ae6b4; color: #276749; }
-    .chip-assistant { background: #fffaf0; border: 1px solid #fbd38d; color: #c05621; }
-    .chip-hrs  { font-weight: 700; }
-    .chip-with { font-size: 11px; opacity: 0.8; margin-top: 2px; }
-    .empty { color: #cbd5e0; font-size: 13px; }
-    .roster-table tbody tr:hover td { background: #f7fafc; }
-
-    /* ── Hours table ── */
-    .hours-wrap { padding: 0 24px 28px; }
-    .hours-wrap h3 { font-size: 14px; font-weight: 700; color: #4a5568; margin-bottom: 10px; }
-    .hours-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .hours-table th { background: #f7fafc; padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
-    .hours-table td { padding: 9px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; }
-    .bar-bg { display: inline-block; vertical-align: middle; width: 90px; height: 6px; background: #e2e8f0; border-radius: 3px; }
-    .bar-fg { height: 6px; border-radius: 3px; background: #0e5c4a; }
-    .ot-label { color: #dd6b20; font-size: 11px; }
-
-    /* ── Staff Management ── */
-    .staff-section { padding: 24px; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .section-header h2 { font-size: 16px; font-weight: 700; color: #2d3748; }
-    .section-divider { border: none; border-top: 1px solid #e2e8f0; margin: 28px 0; }
-
-    /* Staff list table */
-    .staff-list-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 8px; }
-    .staff-list-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; }
-    .staff-list-table td { padding: 11px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
-    .staff-list-table tr.inactive td { opacity: 0.45; }
-    .skill-tag { display: inline-block; background: #edf2f7; color: #4a5568; border-radius: 4px; padding: 2px 7px; font-size: 11px; margin: 1px 2px; }
-    .inactive-badge { background: #fed7d7; color: #c53030; border-radius: 4px; padding: 2px 7px; font-size: 11px; }
-
-    /* Add/Edit panel */
-    .form-panel { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px 24px; margin-bottom: 24px; display: none; }
-    .form-panel.open { display: block; }
-    .form-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #2d3748; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
-    .form-field { display: flex; flex-direction: column; gap: 5px; }
-    .form-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; }
-    .form-field input, .form-field select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px 11px; font-size: 13px; }
-    .form-field.full { grid-column: 1 / -1; }
-    .form-actions { display: flex; gap: 10px; margin-top: 18px; }
-
-    /* Skills checkboxes */
-    .skills-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
-    .skill-check { display: flex; align-items: center; gap: 5px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; }
-    .skill-check input { cursor: pointer; }
-    .skill-check.checked { background: #ebf8ff; border-color: #90cdf4; color: #2b6cb0; }
-
-    /* Working pattern grid */
-    .pattern-grid { border-collapse: collapse; margin-top: 6px; }
-    .pattern-grid th, .pattern-grid td { padding: 6px 10px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0; }
-    .pattern-grid th { background: #f7fafc; font-weight: 700; color: #718096; }
-    .pattern-grid td { background: white; }
-    .pattern-grid input[type=checkbox] { cursor: pointer; width: 15px; height: 15px; }
-
-    /* ── Preferences ── */
-    .pref-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .pref-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; }
-    .pref-table td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
-    .pref-table select { border: 1px solid #cbd5e0; border-radius: 6px; padding: 5px 8px; font-size: 13px; margin-right: 6px; }
-
-    /* ── Procedure Rules ── */
-    .proc-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-    .proc-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; }
-    .proc-table td { padding: 10px 14px; font-size: 13px; border-top: 1px solid #f0f4f8; vertical-align: middle; }
-    .new-proc-row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
-    .new-proc-row input { border: 1px solid #cbd5e0; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
-
-    .save-banner { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #276749; margin-top: 16px; display: none; }
-    .save-banner.show { display: block; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pearl's Roster — Lighthouse Dental</title>
+<style>
+  :root{
+    --bg:#f1f8f6;--surface:#fff;--ink:#1c2b28;--ink-soft:#465754;
+    --teal:#0e9082;--teal-2:#0b7a6e;--teal-deep:#0a5f55;--brand:#2bb8a8;--line:#d6e8e5;
+    --coral:#f2768a;--coral-soft:#e4f5f2;
+    --amber:#b5730a;--amber-bg:#fdf2e0;--red:#c0392b;--red-bg:#fbe9e7;
+    --ok:#0e9082;--ok-bg:#e2f3f0;--shadow:0 6px 20px rgba(120,90,70,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:19px;line-height:1.6;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px 80px}
+  header.top{background:#fff;color:var(--ink);padding:26px 0;margin-bottom:24px;border-bottom:4px solid var(--teal);box-shadow:0 4px 14px rgba(14,140,125,.12)}
+  .brand{display:flex;align-items:center;gap:22px}
+  .logo{height:100px;width:auto;flex:0 0 auto}
+  .brand h1{font-size:3.6rem;line-height:1.05;font-weight:800;color:var(--teal-deep);letter-spacing:-.02em}
+  .pearl-card{display:flex;align-items:center;gap:13px;background:var(--ok-bg);border:1px solid var(--line);border-radius:16px;padding:12px 16px;max-width:290px}
+  .pearl-card p{font-size:.94rem;color:var(--ink-soft);line-height:1.42}
+  .pearl-card strong{color:var(--teal-deep)}
+  .tooth-sm{width:48px!important;flex:0 0 auto;animation:bob 3.4s ease-in-out infinite}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .tooth{width:70px;height:auto;flex:0 0 auto;animation:bob 3s ease-in-out infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.15))}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+  header.top h1{font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
+  header.top p{font-size:1.08rem;opacity:.95}
+  
+  header.top .wrap{padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  nav.tabs{display:flex;gap:12px;margin-bottom:28px}
+  nav.tabs button{flex:1;min-height:60px;font-size:1.12rem;font-weight:700;cursor:pointer;
+    background:var(--surface);color:var(--ink-soft);border:2px solid var(--line);border-radius:18px;transition:.15s}
+  nav.tabs button.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+  nav.tabs button:hover:not(.active){border-color:var(--teal);color:var(--teal);transform:translateY(-2px)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px;margin-bottom:24px}
+  h2{font-size:1.4rem;font-weight:800;margin-bottom:6px}
+  h3{font-size:1.15rem;font-weight:700;margin-bottom:14px}
+  .muted{color:var(--ink-soft);font-size:1rem}
+  label{display:block;font-weight:700;font-size:1rem;margin-bottom:8px}
+  input,select{width:100%;min-height:54px;font-size:1.05rem;padding:12px 16px;border:2px solid var(--line);
+    border-radius:14px;background:#fff;color:var(--ink);font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--teal)}
+  button.btn{min-height:54px;font-size:1.05rem;font-weight:700;cursor:pointer;padding:14px 26px;
+    background:var(--teal);color:#fff;border:none;border-radius:14px;transition:.15s}
+  button.btn:hover{background:var(--teal-2);transform:translateY(-2px)}
+  button.btn.ghost{background:#fff;color:var(--teal);border:2px solid var(--teal)}
+  button.btn.ghost:hover{background:var(--ok-bg)}
+  button.btn.coral{background:var(--coral)}
+  button.btn.coral:hover{background:#ec5e75}
+  button.btn.danger{background:#fff;color:var(--red);border:2px solid var(--red)}
+  button.btn.small{min-height:46px;padding:9px 18px;font-size:.98rem}
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .row > *{flex:1;min-width:180px}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:var(--shadow)}
+  .stat .k{font-size:.95rem;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .stat .v{font-size:2.2rem;font-weight:800;margin-top:6px;line-height:1;color:var(--teal)}
+  .stat .s{font-size:.95rem;color:var(--ink-soft);margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:1.02rem}
+  th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--line)}
+  th{font-size:.9rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700}
+  .grid-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.sched{border-collapse:separate;border-spacing:0;min-width:100%}
+  table.sched th,table.sched td{border:1px solid var(--line);padding:14px 16px;text-align:center;vertical-align:middle}
+  table.sched th{background:var(--teal);color:#fff;font-size:1rem;font-weight:700;text-transform:none;letter-spacing:0}
+  table.sched th.stuck,table.sched td.stuck{position:sticky;left:0;z-index:2}
+  table.sched th.stuck{background:var(--teal);text-align:left;border-top-left-radius:14px}
+  table.sched td.stuck{background:var(--surface);text-align:left;font-weight:700;min-width:190px;font-size:1.05rem}
+  table.sched .th-date{font-weight:400;opacity:.9;font-size:.85rem}
+  table.sched td.on{background:var(--ok-bg)}
+  table.sched td.off{color:#cdbfb6;background:#fdfaf7;font-size:1.3rem}
+  td.edit{cursor:pointer}
+  td.edit:hover{outline:3px solid var(--coral);outline-offset:-3px}
+  .cell-time{font-weight:800;font-size:1.02rem;color:var(--ink);white-space:nowrap}
+  .cell-with{font-size:.88rem;color:var(--ink-soft);margin-top:4px}
+  tr.role-row td{background:var(--coral-soft);font-size:.85rem;font-weight:800;color:var(--teal-deep);letter-spacing:.06em;text-align:left}
+  tr.role-row td.stuck{background:var(--coral-soft)}
+  details{border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+  details > summary{font-size:1.2rem;font-weight:800;padding:22px 26px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  details > summary::-webkit-details-marker{display:none}
+  details > summary::after{content:"⌄";font-size:1.6rem;color:var(--teal);transition:.2s}
+  details[open] > summary::after{transform:rotate(180deg)}
+  details > summary:hover{background:var(--ok-bg)}
+  .det-body{padding:0 26px 26px}
+  .chk{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;font-size:1.02rem;font-weight:600}
+  .chk:hover{border-color:var(--teal)}
+  .chk.on{border-color:var(--teal);background:var(--ok-bg)}
+  .chk input{width:24px;height:24px;min-height:0;flex:0 0 auto;accent-color:var(--teal)}
+  .chk-row{display:flex;gap:10px;flex-wrap:wrap}
+  .chk-row .chk{flex:1;min-width:120px;margin-bottom:0}
+  .staff-item{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .staff-item .info .nm{font-size:1.1rem;font-weight:800}
+  .staff-item .info .meta{font-size:.98rem;color:var(--ink-soft);margin-top:2px}
+  .pill{display:inline-block;font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:4px 12px;border-radius:999px;background:var(--ok-bg);color:var(--teal)}
+  .pill.off{background:#eee;color:#777}
+  .warn{padding:16px 18px;border-radius:14px;margin-bottom:10px;font-size:1.02rem}
+  .warn.critical{background:var(--red-bg);border:1px solid #e7b7b7;color:var(--red)}
+  .warn.warning{background:var(--amber-bg);border:1px solid #ecd2a3;color:var(--amber)}
+  .warn.info{background:var(--ok-bg);border:1px solid var(--line);color:var(--teal)}
+  .warn-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .warn-head .tooth{width:44px;animation:none}
+  .banner{padding:16px 20px;border-radius:14px;font-size:1.05rem;font-weight:700;margin-bottom:20px}
+  .banner.ok{background:var(--ok-bg);color:var(--teal)}
+  .banner.err{background:var(--red-bg);color:var(--red)}
+  .hide{display:none!important}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .save-row{display:flex;justify-content:flex-end;margin-top:18px}
+  .preset-row{display:flex;gap:8px;flex-wrap:wrap}
+  .modal-overlay{position:fixed;inset:0;background:rgba(40,30,25,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal{background:#fff;border-radius:24px;padding:28px;max-width:480px;width:100%;box-shadow:0 16px 50px rgba(0,0,0,.25)}
+  .modal-actions{display:flex;gap:12px;margin-top:24px}
+  .empty-hero{text-align:center;padding:20px 0}
+  .empty-hero .tooth{width:90px;margin:0 auto 10px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}body{font-size:18px}}
+  @media print{
+    header.top,nav.tabs,#gen-card,#roster-hours,#roster-banner,.btn,#add-staff-wrap,.cell-edit-hint{display:none!important}
+    body{background:#fff}
+    .card{box-shadow:none;border:none;padding:0;margin-bottom:14px}
+    table.sched th{background:#0e9082!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    table.sched td.on{background:#e6f5f0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
 </head>
 <body>
-
-<div class="header">
-  <div>🦷</div>
-  <div>
-    <h1>Lighthouse Dental & Implant Centre</h1>
-    <p>Roster Management — Powered by Open Dental</p>
+<header class="top"><div class="wrap top-inner">
+  <div class="brand">
+    <h1>Unity Dental Roster Builder</h1>
   </div>
+  <div class="pearl-card">
+    <svg class="tooth tooth-sm" viewBox="0 0 120 130" aria-hidden="true">
+      <path d="M60 10 C32 10 16 28 18 56 C19 74 26 120 38 120 C47 120 47 92 60 92 C73 92 73 120 82 120 C94 120 101 74 102 56 C104 28 88 10 60 10 Z" fill="#fff" stroke="#cfe9e4" stroke-width="3"/>
+      <circle cx="47" cy="52" r="6.5" fill="#1c2b28"/><circle cx="73" cy="52" r="6.5" fill="#1c2b28"/>
+      <circle cx="49.3" cy="49.7" r="2" fill="#fff"/><circle cx="75.3" cy="49.7" r="2" fill="#fff"/>
+      <circle cx="37" cy="64" r="6.5" fill="#f2768a" opacity=".75"/><circle cx="83" cy="64" r="6.5" fill="#f2768a" opacity=".75"/>
+      <path d="M47 66 Q60 79 73 66" stroke="#1c2b28" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    </svg>
+    <p><strong>Pearl</strong><br>Pick a week and I'll lay out who's in, and when.</p>
+  </div>
+</div></header>
+
+<div class="wrap">
+  <nav class="tabs">
+    <button id="tab-roster" class="active" onclick="showTab('roster')">Roster</button>
+    <button id="tab-rules" onclick="showTab('rules')">Staff &amp; Rules</button>
+  </nav>
+
+  <section id="roster">
+    <div class="card" id="gen-card">
+      <h2>Build this week's roster</h2>
+      <p class="muted" style="margin-bottom:18px">Pick a week, then generate. I read the booked appointments from Open Dental and build the schedule.</p>
+      <div class="row">
+        <div style="flex:0 0 240px"><label for="wk">Week starting (Monday)</label><input type="date" id="wk"></div>
+        <div style="flex:0 0 auto"><button class="btn ghost" onclick="thisWeek()">This week</button></div>
+        <div style="flex:0 0 auto"><button class="btn" onclick="generate()">Generate roster</button></div>
+      </div>
+    </div>
+    <div id="roster-banner"></div>
+    <div id="roster-summary" class="cards-grid hide"></div>
+    <div id="roster-warnings"></div>
+    <div id="roster-body"></div>
+    <div id="roster-hours" class="card hide"></div>
+  </section>
+
+  <section id="rules" class="hide">
+    <div id="rules-banner"></div>
+    <details open><summary>Staff</summary><div class="det-body">
+      <div id="staff-list"></div>
+      <div style="margin-top:18px"><button class="btn" onclick="openStaffForm()">+ Add staff member</button></div>
+      <div id="staff-form" class="hide" style="margin-top:24px;padding-top:24px;border-top:2px solid var(--line)"></div>
+    </div></details>
+    <details><summary>Dentist Preferences</summary><div class="det-body">
+      <p class="muted" style="margin-bottom:18px">Each dentist's favourite assistants, in order. Used when no fixed assistant applies.</p>
+      <div id="prefs-body"></div><div class="save-row"><button class="btn" onclick="savePrefs()">Save preferences</button></div>
+    </div></details>
+    <details><summary>Fixed Assistants</summary><div class="det-body">
+      <p class="muted" style="margin-bottom:18px">Assistants <strong>always</strong> paired with a dentist (overrides preferences). The number chosen also sets how many that dentist gets.</p>
+      <div id="fixed-body"></div><div class="save-row"><button class="btn" onclick="saveFixed()">Save fixed assistants</button></div>
+    </div></details>
+    <details><summary>Assistants per Dentist</summary><div class="det-body">
+      <p class="muted" style="margin-bottom:18px">Default number of assistants each dentist gets (a long surgery day may add more automatically).</p>
+      <div id="count-body"></div><div class="save-row"><button class="btn" onclick="saveCount()">Save counts</button></div>
+    </div></details>
+    <details><summary>Procedure Skill Requirements</summary><div class="det-body">
+      <p class="muted" style="margin-bottom:18px">Which skill an assistant needs to help with each procedure type.</p>
+      <div id="proc-body"></div><div class="save-row"><button class="btn" onclick="saveProcs()">Save requirements</button></div>
+    </div></details>
+  </section>
 </div>
 
-<!-- Tab bar -->
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('roster')">📋 Roster</button>
-  <button class="tab" onclick="switchTab('staff')">👥 Staff & Rules</button>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- ROSTER TAB                                                             -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<div class="tab-panel active" id="tab-roster">
-
-  <div class="controls">
-    <div class="field">
-      <label>Week Start (Monday)</label>
-      <input type="date" id="weekStart">
-    </div>
-    <div class="field">
-      <label>Week End (Saturday)</label>
-      <input type="date" id="weekEnd">
-    </div>
-    <button class="btn btn-primary" onclick="generateRoster()">⚡ Generate Roster</button>
-    <button class="btn btn-secondary" onclick="setThisWeek()">This Week</button>
+<div id="modal" class="modal-overlay hide"><div class="modal">
+  <h3 id="m-title"></h3>
+  <p class="muted" style="margin-bottom:12px">Use a quick option, or type exact times.</p>
+  <div class="preset-row">
+    <button class="btn ghost small" onclick="setPreset('','')">Off</button>
+    <button class="btn ghost small" onclick="setPreset('08:00','13:00')">Morning</button>
+    <button class="btn ghost small" onclick="setPreset('14:00','18:00')">Afternoon</button>
+    <button class="btn ghost small" onclick="setPreset('08:00','18:00')">Full day</button>
   </div>
-
-  <div class="exc-panel">
-    <button class="exc-toggle" onclick="toggleExc()">
-      <span id="excArrow">▶</span> Weekly Exceptions
-      <span id="excCount" style="color:#0e5c4a;margin-left:4px"></span>
-    </button>
-    <div class="exc-body" id="excBody">
-      <div class="exc-section">
-        <strong>Days Off</strong>
-        <div id="daysOffList"></div>
-        <button class="btn-add" onclick="addDayOff()">+ Add Day Off</button>
-      </div>
-      <div class="exc-section">
-        <strong>Late Starts</strong>
-        <div id="lateStartList"></div>
-        <button class="btn-add" onclick="addLateStart()">+ Add Late Start</button>
-      </div>
-      <div class="exc-section">
-        <strong>Notes for This Week</strong>
-        <textarea id="weekNotes" rows="2" style="width:100%;max-width:480px;border:1px solid #cbd5e0;border-radius:6px;padding:7px;font-size:13px;resize:vertical;margin-top:4px" placeholder="e.g. Dr MK leaving early Friday for CE course"></textarea>
-      </div>
-    </div>
+  <div class="grid2" style="margin-top:16px">
+    <div><label>Start time</label><input type="time" id="m-start"></div>
+    <div><label>End time</label><input type="time" id="m-end"></div>
   </div>
-
-  <div class="status" id="rosterStatus">Ready — select a week and click Generate Roster.</div>
-  <div id="rosterOutput"></div>
-
-</div><!-- /tab-roster -->
-
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- STAFF & RULES TAB                                                      -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<div class="tab-panel" id="tab-staff">
-<div class="staff-section">
-
-  <!-- ── Staff Members ─────────────────────────────────────────────────── -->
-  <div class="section-header">
-    <h2>Staff Members</h2>
-    <button class="btn btn-primary btn-sm" onclick="openAddForm()">+ Add Staff Member</button>
-  </div>
-
-  <!-- Add / Edit form panel -->
-  <div class="form-panel" id="staffForm">
-    <h3 id="formTitle">Add Staff Member</h3>
-    <input type="hidden" id="editingId">
-
-    <div class="form-grid">
-      <div class="form-field">
-        <label>Full Name *</label>
-        <input type="text" id="fName" placeholder="e.g. Sara Johal">
-      </div>
-      <div class="form-field">
-        <label>Role *</label>
-        <select id="fRole" onchange="toggleProviderField()">
-          <option value="assistant">Dental Assistant</option>
-          <option value="hygienist">Hygienist</option>
-          <option value="dentist">Dentist</option>
-        </select>
-      </div>
-      <div class="form-field" id="providerIdField" style="display:none">
-        <label>Open Dental Provider ID</label>
-        <input type="number" id="fProviderId" placeholder="e.g. 5">
-      </div>
-      <div class="form-field">
-        <label>Hourly Cost ($)</label>
-        <input type="number" id="fCost" value="30" step="0.5">
-      </div>
-      <div class="form-field">
-        <label>Max Weekly Hours</label>
-        <input type="number" id="fMaxHours" value="40">
-      </div>
-      <div class="form-field">
-        <label>Overtime Threshold (h)</label>
-        <input type="number" id="fOtHours" value="40">
-      </div>
-    </div>
-
-    <!-- Skills -->
-    <div class="form-field" style="margin-top:14px">
-      <label>Skills</label>
-      <div class="skills-grid" id="skillsGrid"></div>
-    </div>
-
-    <!-- Working pattern -->
-    <div class="form-field" style="margin-top:14px">
-      <label>Working Pattern <span style="font-weight:400;text-transform:none;color:#a0aec0">(leave all unchecked = available every session)</span></label>
-      <table class="pattern-grid" id="patternGrid">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th style="text-align:left">Morning</th>
-            <td><input type="checkbox" data-day="0" data-part="morning"></td>
-            <td><input type="checkbox" data-day="1" data-part="morning"></td>
-            <td><input type="checkbox" data-day="2" data-part="morning"></td>
-            <td><input type="checkbox" data-day="3" data-part="morning"></td>
-            <td><input type="checkbox" data-day="4" data-part="morning"></td>
-            <td><input type="checkbox" data-day="5" data-part="morning"></td>
-          </tr>
-          <tr>
-            <th style="text-align:left">Afternoon</th>
-            <td><input type="checkbox" data-day="0" data-part="afternoon"></td>
-            <td><input type="checkbox" data-day="1" data-part="afternoon"></td>
-            <td><input type="checkbox" data-day="2" data-part="afternoon"></td>
-            <td><input type="checkbox" data-day="3" data-part="afternoon"></td>
-            <td><input type="checkbox" data-day="4" data-part="afternoon"></td>
-            <td><input type="checkbox" data-day="5" data-part="afternoon"></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="saveStaff()">Save</button>
-      <button class="btn btn-secondary" onclick="closeForm()">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Staff list -->
-  <div id="staffListWrap">
-    <div style="padding:32px;text-align:center;color:#a0aec0">Loading staff…</div>
-  </div>
-
-  <hr class="section-divider">
-
-  <!-- ── Dentist Preferences ─────────────────────────────────────────── -->
-  <div class="section-header">
-    <h2>Dentist Preferences</h2>
-    <button class="btn btn-primary btn-sm" onclick="savePreferences()">Save Preferences</button>
-  </div>
-  <p style="font-size:13px;color:#718096;margin-bottom:14px">Set which assistants each dentist prefers to work with, in ranked order.</p>
-  <div id="preferencesWrap">
-    <div style="padding:24px;text-align:center;color:#a0aec0">Loading…</div>
-  </div>
-  <div class="save-banner" id="prefBanner">✓ Preferences saved successfully.</div>
-
-  <hr class="section-divider">
-
-  <!-- ── Procedure → Skill Rules ─────────────────────────────────────── -->
-  <div class="section-header">
-    <h2>Procedure Skill Requirements</h2>
-    <button class="btn btn-primary btn-sm" onclick="saveProcedures()">Save Rules</button>
-  </div>
-  <p style="font-size:13px;color:#718096;margin-bottom:14px">Which skills are required to assist with each procedure type.</p>
-  <div id="proceduresWrap">
-    <div style="padding:24px;text-align:center;color:#a0aec0">Loading…</div>
-  </div>
-  <div class="new-proc-row">
-    <input type="text" id="newProcName" placeholder="New procedure name e.g. Sedation">
-    <button class="btn btn-secondary btn-sm" onclick="addProcedureRow()">+ Add Procedure</button>
-  </div>
-  <div class="save-banner" id="procBanner">✓ Procedure rules saved successfully.</div>
-
-</div>
-</div><!-- /tab-staff -->
+  <div id="m-with-wrap" style="margin-top:16px"><label>With dentist</label><select id="m-with"></select></div>
+  <div class="modal-actions"><button class="btn" onclick="applyCell()">Apply</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+</div></div>
 
 <script>
-const API = 'http://127.0.0.1:8000';
-let STAFF       = [];   // compiled staff (for roster tab)
-let STAFF_RAW   = [];   // raw YAML staff (for staff tab)
-let RULES       = {};   // {dentist_preferences, procedure_skill_map, skill_catalogue}
+const API="http://127.0.0.1:8000";
+const DAYNAMES=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const SHORT=["Mon","Tue","Wed","Thu","Fri","Sat"];
+const WORRIED_TOOTH=`<svg class="tooth" viewBox="0 0 120 130" aria-hidden="true"><path d="M60 10 C32 10 16 28 18 56 C19 74 26 120 38 120 C47 120 47 92 60 92 C73 92 73 120 82 120 C94 120 101 74 102 56 C104 28 88 10 60 10 Z" fill="#fff" stroke="#ecdfd6" stroke-width="3"/><circle cx="47" cy="52" r="6.5" fill="#2a2320"/><circle cx="73" cy="52" r="6.5" fill="#2a2320"/><circle cx="37" cy="64" r="6" fill="#f2768a" opacity=".7"/><circle cx="83" cy="64" r="6" fill="#f2768a" opacity=".7"/><path d="M47 72 Q60 62 73 72" stroke="#2a2320" stroke-width="3.6" fill="none" stroke-linecap="round"/></svg>`;
+let CONFIG={staff:[]}, RULES={}, SCHED=null, EDIT=null;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════════════
-async function init() {
-  setThisWeek();
-  try {
-    const [sc, sr, ru] = await Promise.all([
-      fetch(`${API}/api/config/staff`).then(r => r.json()),
-      fetch(`${API}/api/staff`).then(r => r.json()),
-      fetch(`${API}/api/rules`).then(r => r.json()),
-    ]);
-    STAFF     = sc.staff;
-    STAFF_RAW = sr.staff;
-    RULES     = ru;
-    buildSkillsGrid();
-    renderStaffList();
-    renderPreferences();
-    renderProcedures();
-  } catch(e) {
-    setRosterStatus('Cannot reach API — make sure uvicorn is running on port 8000.', 'err');
+function showTab(t){
+  document.getElementById('roster').classList.toggle('hide',t!=='roster');
+  document.getElementById('rules').classList.toggle('hide',t!=='rules');
+  document.getElementById('tab-roster').classList.toggle('active',t==='roster');
+  document.getElementById('tab-rules').classList.toggle('active',t==='rules');
+  if(t==='rules') loadRules();
+}
+function banner(id,msg,ok=true){document.getElementById(id).innerHTML=msg?`<div class="banner ${ok?'ok':'err'}">${msg}</div>`:'';}
+function dentistName(provId){const d=CONFIG.staff.find(s=>s.provider_id===provId&&s.role==='dentist');return d?d.name:`Provider ${provId}`;}
+function fmtDate(iso){return new Date(iso+'T00:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric'});}
+function dayLabel(iso){const d=new Date(iso+'T00:00:00');return DAYNAMES[(d.getDay()+6)%7]+' · '+fmtDate(iso);}
+function fmtTime(t){if(!t)return'';let[h,m]=t.split(':').map(Number);const ap=h>=12?'PM':'AM';let hh=h%12;if(hh===0)hh=12;return `${hh}:${String(m).padStart(2,'0')} ${ap}`;}
+function spanHours(s,e){if(!s||!e)return 0;const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);let h=(eh+em/60)-(sh+sm/60);if(h<0)h+=24;if(h>=8)h-=1;return Math.round(h*4)/4;}
+
+// ---------- ROSTER ----------
+function thisWeek(){const now=new Date();const day=(now.getDay()+6)%7;const mon=new Date(now);mon.setDate(now.getDate()-day);document.getElementById('wk').value=mon.toISOString().slice(0,10);}
+async function loadConfig(){if(CONFIG.staff.length)return;const r=await fetch(`${API}/api/config/staff`);CONFIG=await r.json();}
+async function generate(){
+  const wk=document.getElementById('wk').value;
+  if(!wk){banner('roster-banner','Pick a week first.',false);return;}
+  banner('roster-banner','Building the roster…');
+  const end=new Date(wk+'T00:00:00');end.setDate(end.getDate()+5);
+  try{
+    await loadConfig();
+    const r=await fetch(`${API}/api/roster?week_start=${wk}&week_end=${end.toISOString().slice(0,10)}`);
+    if(!r.ok) throw new Error('Server error');
+    const data=await r.json();
+    buildSched(data); renderWarnings(); renderGrid(); renderTotals();
+    banner('roster-banner','');
+  }catch(e){banner('roster-banner','Hmm, I could not build it: '+e.message,false);}
+}
+function buildSched(data){
+  const wkStart=(data.summary&&data.summary.week_start)||null;
+  const days=[];
+  if(wkStart){const base=new Date(wkStart+'T00:00:00');for(let n=0;n<6;n++){const d=new Date(base);d.setDate(base.getDate()+n);days.push(d.toISOString().slice(0,10));}}
+  const staff={};
+  (data.assignments||[]).forEach(a=>{
+    const [day,part]=a.session_key.split('|');
+    const cfg=CONFIG.staff.find(s=>s.staff_id===a.staff_id)||{};
+    staff[a.staff_id]=staff[a.staff_id]||{name:a.staff_name,role:a.role,rate:cfg.hourly_cost||30,days:{}};
+    const c=staff[a.staff_id].days[day]=staff[a.staff_id].days[day]||{morning:false,afternoon:false,serves:null};
+    c[part]=true; if(a.serves_provider_id!=null) c.serves=a.serves_provider_id;
+  });
+  // convert morning/afternoon flags -> start/end times
+  Object.values(staff).forEach(st=>{
+    Object.keys(st.days).forEach(day=>{
+      const c=st.days[day];let start=null,end=null;
+      if(c.morning&&c.afternoon){start='08:00';end='18:00';}
+      else if(c.morning){start='08:00';end='13:00';}
+      else if(c.afternoon){start='14:00';end='18:00';}
+      st.days[day]={start,end,serves:c.serves};
+    });
+  });
+  SCHED={days,staff,warnings:data.warnings||[],engineSummary:data.summary||{},engineHours:data.hours||[],dirty:false};
+}
+function renderWarnings(){
+  const w=(SCHED.warnings||[]);
+  document.getElementById('roster-warnings').innerHTML=w.length
+    ? `<div class="card"><div class="warn-head">${WORRIED_TOOTH}<h3 style="margin:0">A few things I noticed</h3></div>`+w.map(x=>`<div class="warn ${x.severity}">${x.message}</div>`).join('')+'</div>' : '';
+}
+function renderGrid(){
+  const days=SCHED.days, roleOrder={dentist:0,hygienist:1,assistant:2};
+  const ids=Object.keys(SCHED.staff).sort((x,y)=>{const rx=roleOrder[SCHED.staff[x].role]??9,ry=roleOrder[SCHED.staff[y].role]??9;return rx!==ry?rx-ry:SCHED.staff[x].name.localeCompare(SCHED.staff[y].name);});
+  function cellHtml(sid,day){
+    const c=SCHED.staff[sid].days[day];
+    if(!c||!c.start||!c.end) return `<td class="off edit" onclick="openCell('${sid}','${day}')">—</td>`;
+    const withTxt=(c.serves!=null)?`<div class="cell-with">with ${dentistName(c.serves).replace('Dr ','')}</div>`:'';
+    return `<td class="on edit" onclick="openCell('${sid}','${day}')"><div class="cell-time">${fmtTime(c.start)} – ${fmtTime(c.end)}</div>${withTxt}</td>`;
+  }
+  let html=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+    <h2 style="margin:0">This Week's Schedule ${SCHED.dirty?'<span class="pill" style="background:var(--amber-bg);color:var(--amber)">adjusted</span>':''}</h2>
+    <button class="btn ghost small" onclick="printSchedule()">Print</button></div>
+    <p class="muted cell-edit-hint" style="margin-bottom:14px">Tap any cell to change someone's hours or who they're with.</p>
+    <div class="grid-scroll"><table class="sched"><thead><tr><th class="stuck">Staff</th>`;
+  days.forEach((d,n)=>{html+=`<th>${SHORT[n]}<br><span class="th-date">${fmtDate(d)}</span></th>`;});
+  html+='</tr></thead><tbody>';
+  let lastRole=null;
+  ids.forEach(sid=>{const st=SCHED.staff[sid];
+    if(st.role!==lastRole){lastRole=st.role;html+=`<tr class="role-row"><td class="stuck">${st.role.toUpperCase()}S</td>${days.map(()=>'<td></td>').join('')}</tr>`;}
+    html+=`<tr><td class="stuck">${st.name}</td>`;
+    days.forEach(d=>{html+=cellHtml(sid,d);});
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  const absent=CONFIG.staff.filter(s=>s.active!==false&&!SCHED.staff[s.staff_id]);
+  if(absent.length){
+    html+=`<div id="add-staff-wrap" style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="add-staff-sel" style="max-width:280px">${absent.map(s=>`<option value="${s.staff_id}">${s.name}</option>`).join('')}</select>
+      <button class="btn ghost small" onclick="addStaffRow()">+ Add to schedule</button></div>`;
+  }
+  html+='</div>';
+  document.getElementById('roster-body').innerHTML = ids.length ? html
+    : `<div class="card"><div class="empty-hero">${WORRIED_TOOTH}<p class="muted">No appointments this week — a quiet one! You can still add staff using the rules tab.</p></div></div>`;
+}
+function renderTotals(){
+  document.getElementById('roster-summary').classList.remove('hide');
+  document.getElementById('roster-hours').classList.remove('hide');
+  if(!SCHED.dirty){
+    const s=SCHED.engineSummary||{};
+    document.getElementById('roster-summary').innerHTML=`
+      <div class="stat"><div class="k">Assignments</div><div class="v">${s.total_assignments??0}</div><div class="s">across the week</div></div>
+      <div class="stat"><div class="k">Vacancies</div><div class="v">${s.vacancies??0}</div><div class="s">${s.vacancies?'need attention':'all covered'}</div></div>
+      <div class="stat"><div class="k">Weekly cost</div><div class="v">$${Math.round(s.total_cost??0).toLocaleString()}</div><div class="s">estimated payroll</div></div>
+      <div class="stat"><div class="k">Overtime</div><div class="v">${s.overtime_hours??0}h</div><div class="s">this week</div></div>`;
+    document.getElementById('roster-hours').innerHTML=`<h2>Staff Hours &amp; Cost</h2>
+      <table><thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Est. cost</th></tr></thead><tbody>`+
+      (SCHED.engineHours||[]).map(h=>`<tr><td><strong>${h.staff_name}</strong></td><td>${h.role}</td><td>${h.total_hours}h / ${h.max_hours}h</td><td>$${h.cost.toLocaleString()}</td></tr>`).join('')+`</tbody></table>`;
+  } else {
+    let totalCost=0,totalAssign=0;const hours=[];
+    Object.entries(SCHED.staff).forEach(([sid,st])=>{
+      let h=0;
+      SCHED.days.forEach(d=>{const c=st.days[d];if(c&&c.start&&c.end){h+=spanHours(c.start,c.end);totalAssign++;}});
+      if(h>0){const cost=h*st.rate;totalCost+=cost;hours.push({name:st.name,role:st.role,total:h,cost});}
+    });
+    document.getElementById('roster-summary').innerHTML=`
+      <div class="stat"><div class="k">Shifts</div><div class="v">${totalAssign}</div><div class="s">across the week</div></div>
+      <div class="stat"><div class="k">Staff working</div><div class="v">${hours.length}</div><div class="s">this week</div></div>
+      <div class="stat"><div class="k">Weekly cost</div><div class="v">$${Math.round(totalCost).toLocaleString()}</div><div class="s">estimate (adjusted)</div></div>
+      <div class="stat"><div class="k">Days</div><div class="v">${SCHED.days.length}</div><div class="s">Mon–Sat</div></div>`;
+    document.getElementById('roster-hours').innerHTML=`<h2>Staff Hours &amp; Cost <span class="pill" style="background:var(--amber-bg);color:var(--amber)">adjusted</span></h2>
+      <table><thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Est. cost</th></tr></thead><tbody>`+
+      hours.map(h=>`<tr><td><strong>${h.name}</strong></td><td>${h.role}</td><td>${h.total}h</td><td>$${h.cost.toLocaleString()}</td></tr>`).join('')+`</tbody></table>`;
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════════════════════════════════
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['roster','staff'];
-    t.classList.toggle('active', names[i] === name);
-  });
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById(`tab-${name}`).classList.add('active');
+function openCell(sid,day){
+  EDIT={sid,day};const st=SCHED.staff[sid];const c=st.days[day]||{start:null,end:null,serves:null};
+  document.getElementById('m-title').textContent=`${st.name} — ${dayLabel(day)}`;
+  document.getElementById('m-start').value=c.start||'';
+  document.getElementById('m-end').value=c.end||'';
+  const ww=document.getElementById('m-with-wrap');
+  if(st.role==='assistant'){ww.classList.remove('hide');
+    const ds=CONFIG.staff.filter(s=>s.role==='dentist');
+    document.getElementById('m-with').innerHTML='<option value="">— none —</option>'+ds.map(d=>`<option value="${d.provider_id}" ${c.serves===d.provider_id?'selected':''}>${d.name}</option>`).join('');
+  } else ww.classList.add('hide');
+  document.getElementById('modal').classList.remove('hide');
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ROSTER TAB
-// ═══════════════════════════════════════════════════════════════════════════
-function setThisWeek() {
-  const today = new Date();
-  const dow   = today.getDay();
-  const mon   = new Date(today); mon.setDate(today.getDate() - (dow===0?6:dow-1));
-  const sat   = new Date(mon);   sat.setDate(mon.getDate()+5);
-  document.getElementById('weekStart').value = fmt(mon);
-  document.getElementById('weekEnd').value   = fmt(sat);
+function setPreset(s,e){document.getElementById('m-start').value=s;document.getElementById('m-end').value=e;}
+function applyCell(){
+  const {sid,day}=EDIT;const st=SCHED.staff[sid];
+  const start=document.getElementById('m-start').value, end=document.getElementById('m-end').value;
+  const serves=document.getElementById('m-with').value;
+  if(!start||!end) st.days[day]={start:null,end:null,serves:null};
+  else st.days[day]={start,end,serves:(st.role==='assistant'&&serves!=='')?parseInt(serves):null};
+  SCHED.dirty=true;closeModal();renderGrid();renderTotals();
 }
-
-function fmt(d) { return d.toISOString().split('T')[0]; }
-
-function setRosterStatus(msg, cls='') {
-  const el = document.getElementById('rosterStatus');
-  el.textContent = msg; el.className = 'status ' + cls;
+function closeModal(){document.getElementById('modal').classList.add('hide');EDIT=null;}
+function addStaffRow(){
+  const sel=document.getElementById('add-staff-sel');if(!sel)return;
+  const cfg=CONFIG.staff.find(s=>s.staff_id===sel.value);if(!cfg)return;
+  SCHED.staff[cfg.staff_id]={name:cfg.name,role:cfg.role,rate:cfg.hourly_cost||30,days:{}};
+  SCHED.dirty=true;renderGrid();renderTotals();
 }
+function printSchedule(){window.print();}
 
-function toggleExc() {
-  const b = document.getElementById('excBody');
-  const a = document.getElementById('excArrow');
-  const open = b.classList.toggle('open');
-  a.textContent = open ? '▼' : '▶';
-}
-
-function staffOptionsAll() {
-  return STAFF.map(s => `<option value="${s.staff_id}">${s.name}</option>`).join('');
-}
-
-function addDayOff() {
-  const ws = document.getElementById('weekStart').value;
-  const row = document.createElement('div'); row.className = 'exc-row';
-  row.innerHTML = `<select><option value="">— select —</option>${staffOptionsAll()}</select>
-    <input type="date" value="${ws}">
-    <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
-  document.getElementById('daysOffList').appendChild(row); updateExcCount();
-}
-
-function addLateStart() {
-  const ws = document.getElementById('weekStart').value;
-  const row = document.createElement('div'); row.className = 'exc-row';
-  row.innerHTML = `<select><option value="">— select —</option>${staffOptionsAll()}</select>
-    <input type="date" value="${ws}">
-    <span style="font-size:12px;color:#718096">arrives at</span>
-    <input type="time" value="09:00">
-    <button class="btn-remove" onclick="this.parentElement.remove();updateExcCount()">×</button>`;
-  document.getElementById('lateStartList').appendChild(row); updateExcCount();
-}
-
-function updateExcCount() {
-  const n = document.querySelectorAll('.exc-row').length;
-  document.getElementById('excCount').textContent = n ? `(${n})` : '';
-}
-
-function collectExceptions() {
-  const days_off = [];
-  document.querySelectorAll('#daysOffList .exc-row').forEach(row => {
-    const [sel,dt] = row.querySelectorAll('select,input[type=date]');
-    if (sel.value && dt.value) days_off.push({staff_id:sel.value, date:dt.value});
-  });
-  const late_starts = [];
-  document.querySelectorAll('#lateStartList .exc-row').forEach(row => {
-    const sel=row.querySelector('select'), dt=row.querySelector('input[type=date]'), t=row.querySelector('input[type=time]');
-    if (sel.value&&dt.value&&t.value) late_starts.push({staff_id:sel.value,date:dt.value,start_time:t.value});
-  });
-  const note = document.getElementById('weekNotes').value.trim();
-  return {days_off, late_starts, early_finishes:[], notes: note?[note]:[]};
-}
-
-async function generateRoster() {
-  const ws = document.getElementById('weekStart').value;
-  const we = document.getElementById('weekEnd').value;
-  if (!ws||!we) { setRosterStatus('Select a week first.','err'); return; }
-  setRosterStatus('Generating roster from Open Dental data…');
-  document.getElementById('rosterOutput').innerHTML =
-    '<div style="padding:48px;text-align:center;color:#a0aec0">Building roster…</div>';
-  try {
-    const exc = collectExceptions();
-    const hasExc = exc.days_off.length||exc.late_starts.length||exc.notes.length;
-    const url = `${API}/api/roster?week_start=${ws}&week_end=${we}`;
-    const res = hasExc
-      ? await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(exc)})
-      : await fetch(url);
-    if (!res.ok) { const e=await res.json(); setRosterStatus(e.detail,'err'); return; }
-    const data = await res.json();
-    const s = data.summary;
-    setRosterStatus(`✓ Roster ready — ${s.total_assignments} assignments · $${s.total_cost.toLocaleString()} weekly cost · ${s.vacancies} vacancies`,'ok');
-    renderRosterOutput(data, ws);
-  } catch(e) {
-    setRosterStatus(`Connection error: ${e.message}`,'err');
-    document.getElementById('rosterOutput').innerHTML = '';
-  }
-}
-
-function renderRosterOutput(roster, weekStart) {
-  document.getElementById('rosterOutput').innerHTML = `
-    ${vacancyBanner(roster.vacancies)}
-    ${notesHtml(roster.notes)}
-    <div class="summary">${summaryCards(roster)}</div>
-    <div class="grid-wrap">${rosterGrid(roster, weekStart)}</div>
-    <div class="hours-wrap"><h3>Staff Hours & Cost</h3>${hoursTable(roster.hours)}</div>
-  `;
-}
-
-function buildSessions(weekStart) {
-  const days = ['Mon','Tue','Wed','Thu','Fri','Sat'], sessions = [];
-  for (let i=0;i<6;i++) {
-    const d=new Date(weekStart); d.setDate(d.getDate()+i);
-    const date=fmt(d);
-    sessions.push({key:`${date}|morning`,  date,day:days[i],part:'morning',  time:'8:00 – 13:00'});
-    sessions.push({key:`${date}|afternoon`,date,day:days[i],part:'afternoon',time:'14:00 – 18:00'});
-  }
-  return sessions;
-}
-
-function dentistNameMap() {
-  const map={};
-  STAFF.forEach(s=>{ if(s.provider_id) map[s.provider_id]=s.name; });
-  return map;
-}
-
-function rosterGrid(roster, weekStart) {
-  const sessions=buildSessions(weekStart), dentistMap=dentistNameMap();
-  const bySession={};
-  roster.assignments.forEach(a=>{ (bySession[a.session_key]=bySession[a.session_key]||[]).push(a); });
-  const active=sessions.filter(s=>bySession[s.key]?.length);
-  const order={dentist:0,hygienist:1,assistant:2};
-  const staffRows=[...STAFF].sort((a,b)=>order[a.role]-order[b.role]);
-  const hdr=`<tr><th class="name-col">Staff Member</th>${active.map(s=>`<th>
-    <div class="sh-day">${s.day} <span style="font-weight:400;color:#718096">${s.date.slice(5).replace('-','/')}</span></div>
-    <div class="sh-time">${s.time}</div>
-    <span class="sh-part ${s.part==='morning'?'part-am':'part-pm'}">${s.part}</span>
-  </th>`).join('')}</tr>`;
-  const rows=staffRows.map(staff=>{
-    const cells=active.map(session=>{
-      const a=(bySession[session.key]||[]).find(x=>x.staff_id===staff.staff_id);
-      if(!a) return `<td class="asgn-cell"><span class="empty">—</span></td>`;
-      let withLine='';
-      if(a.serves_provider_id) {
-        const dName=dentistMap[a.serves_provider_id]||`Prov ${a.serves_provider_id}`;
-        withLine=`<div class="chip-with">w/ ${dName.replace('Dr ','')}</div>`;
-      }
-      return `<td class="asgn-cell"><div class="chip chip-${a.role}">
-        <div class="chip-hrs">${a.hours}h</div>${withLine}</div></td>`;
-    }).join('');
-    return `<tr><td class="name-cell">${staff.name}<span class="role-badge rb-${staff.role}">${staff.role}</span></td>${cells}</tr>`;
+// ---------- RULES ----------
+async function loadRules(){await loadConfig();const r=await fetch(`${API}/api/rules`);RULES=await r.json();renderStaffList();renderPrefs();renderFixed();renderCount();renderProcs();}
+function dentists(){return CONFIG.staff.filter(s=>s.role==='dentist');}
+function assistantsList(){return CONFIG.staff.filter(s=>s.role==='assistant');}
+function renderStaffList(){
+  document.getElementById('staff-list').innerHTML=CONFIG.staff.map(s=>{
+    const off=(s.recurring_days_off||[]).map(d=>SHORT[d]).join(', ');
+    const meta=[s.role,(s.skills||[]).join('/'),off?`off: ${off}`:''].filter(Boolean).join(' · ');
+    return `<div class="staff-item"><div class="info"><div class="nm">${s.name} ${s.active===false?'<span class="pill off">inactive</span>':''}</div><div class="meta">${meta}</div></div>
+      <div style="display:flex;gap:8px"><button class="btn ghost small" onclick='openStaffForm(${JSON.stringify(s.staff_id)})'>Edit</button></div></div>`;
   }).join('');
-  return `<table class="roster-table"><thead>${hdr}</thead><tbody>${rows}</tbody></table>`;
 }
-
-function summaryCards(roster) {
-  const s=roster.summary;
-  return `
-    <div class="card"><div class="lbl">Assignments</div><div class="val">${s.total_assignments}</div><div class="sub">across the week</div></div>
-    <div class="card"><div class="lbl">Vacancies</div><div class="val" style="color:${s.vacancies>0?'#e53e3e':'#276749'}">${s.vacancies}</div><div class="sub">${s.vacancies===0?'fully covered ✓':'need attention'}</div></div>
-    <div class="card"><div class="lbl">Weekly Cost</div><div class="val">$${s.total_cost.toLocaleString()}</div><div class="sub">estimated payroll</div></div>
-    <div class="card"><div class="lbl">Overtime</div><div class="val" style="color:${s.overtime_hours>0?'#dd6b20':'#276749'}">${s.overtime_hours}h</div><div class="sub">this week</div></div>`;
+function openStaffForm(staffId){
+  const s=staffId?CONFIG.staff.find(x=>x.staff_id===staffId):null;
+  const skills=RULES.skill_catalogue||['general'];
+  const f=document.getElementById('staff-form');f.classList.remove('hide');f._editing=staffId||null;f._original=s||null;
+  const has=sk=>s&&(s.skills||[]).includes(sk);
+  const offHas=d=>s&&(s.recurring_days_off||[]).includes(d);
+  f.innerHTML=`<h3>${s?'Edit '+s.name:'Add staff member'}</h3>
+    <div class="grid2"><div><label>Name</label><input id="f-name" value="${s?s.name:''}"></div>
+      <div><label>Role</label><select id="f-role" onchange="toggleProv()">${['dentist','hygienist','assistant'].map(r=>`<option value="${r}" ${s&&s.role===r?'selected':''}>${r}</option>`).join('')}</select></div></div>
+    <div class="grid2" style="margin-top:16px"><div id="f-prov-wrap"><label>Open Dental Provider ID</label><input id="f-prov" type="number" value="${s&&s.provider_id!=null?s.provider_id:''}"></div>
+      <div><label>Hourly cost ($)</label><input id="f-cost" type="number" value="${s?s.hourly_cost:30}"></div></div>
+    <div class="grid2" style="margin-top:16px"><div><label>Max weekly hours</label><input id="f-max" type="number" value="${s?s.max_weekly_hours:40}"></div>
+      <div><label>Max hours per day</label><input id="f-daily" type="number" step="0.5" placeholder="no cap" value="${s&&s.max_daily_hours?s.max_daily_hours:''}"></div></div>
+    <div style="margin-top:16px"><label>Arrival before first patient</label><select id="f-buffer">
+      ${[['','Default for role'],['0','None'],['30','30 minutes'],['60','1 hour'],['90','1.5 hours'],['120','2 hours']].map(([v,l])=>`<option value="${v}" ${s&&String(s.arrival_buffer_min)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div style="margin-top:16px"><label>Skills</label><div class="chk-row">
+      ${skills.map(sk=>`<label class="chk ${has(sk)?'on':''}"><input type="checkbox" class="f-skill" value="${sk}" ${has(sk)?'checked':''} onchange="this.closest('.chk').classList.toggle('on',this.checked)">${sk}</label>`).join('')}</div></div>
+    <div style="margin-top:16px"><label>Recurring days off</label><div class="chk-row">
+      ${SHORT.map((d,i)=>`<label class="chk ${offHas(i)?'on':''}"><input type="checkbox" class="f-off" value="${i}" ${offHas(i)?'checked':''} onchange="this.closest('.chk').classList.toggle('on',this.checked)">${d}</label>`).join('')}</div></div>
+    <div style="display:flex;gap:12px;margin-top:22px">
+      <button class="btn" onclick="saveStaff()">${s?'Save changes':'Add staff'}</button>
+      <button class="btn ghost" onclick="document.getElementById('staff-form').classList.add('hide')">Cancel</button>
+      ${s?`<button class="btn danger" onclick="deactivateStaff('${s.staff_id}')">Deactivate</button>`:''}</div>`;
+  toggleProv();
 }
-
-function hoursTable(hours) {
-  const rows=hours.map(h=>{
-    const pct=Math.min(100,Math.round(h.total_hours/h.max_hours*100));
-    const ot=h.overtime_hours>0?`<span class="ot-label"> +${h.overtime_hours}h OT</span>`:'';
-    return `<tr><td>${h.staff_name}</td><td><span class="role-badge rb-${h.role}">${h.role}</span></td>
-      <td>${h.total_hours}h / ${h.max_hours}h${ot}</td>
-      <td><div class="bar-bg"><div class="bar-fg" style="width:${pct}%"></div></div></td>
-      <td style="font-weight:600">$${h.cost.toLocaleString()}</td></tr>`;
+function toggleProv(){document.getElementById('f-prov-wrap').style.display=(document.getElementById('f-role').value==='assistant')?'none':'block';}
+async function saveStaff(){
+  const f=document.getElementById('staff-form');
+  const skills=[...document.querySelectorAll('.f-skill:checked')].map(c=>c.value);
+  const off=[...document.querySelectorAll('.f-off:checked')].map(c=>parseInt(c.value));
+  const role=document.getElementById('f-role').value;
+  const buf=document.getElementById('f-buffer').value, daily=document.getElementById('f-daily').value, prov=document.getElementById('f-prov').value;
+  const body={name:document.getElementById('f-name').value.trim(),role,skills,
+    hourly_cost:parseFloat(document.getElementById('f-cost').value)||30,max_weekly_hours:parseFloat(document.getElementById('f-max').value)||40,active:true,
+    recurring_days_off:off,normal_pattern:f._original?(f._original.normal_pattern||[]):[],
+    provider_id:(role!=='assistant'&&prov!=='')?parseInt(prov):null,
+    arrival_buffer_min:buf!==''?parseInt(buf):null,max_daily_hours:daily!==''?parseFloat(daily):null};
+  if(!body.name){banner('rules-banner','Enter a name first.',false);return;}
+  const editing=f._editing;
+  const r=await fetch(editing?`${API}/api/staff/${editing}`:`${API}/api/staff`,{method:editing?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(r.ok){CONFIG.staff=[];await loadConfig();renderStaffList();f.classList.add('hide');banner('rules-banner','Saved.');setTimeout(()=>banner('rules-banner',''),2500);}
+  else banner('rules-banner','Could not save staff.',false);
+}
+async function deactivateStaff(id){
+  if(!confirm('Deactivate this staff member? They will no longer be rostered.'))return;
+  const r=await fetch(`${API}/api/staff/${id}`,{method:'DELETE'});
+  if(r.ok){CONFIG.staff=[];await loadConfig();renderStaffList();document.getElementById('staff-form').classList.add('hide');}
+}
+function renderPrefs(){
+  const asts=assistantsList();
+  document.getElementById('prefs-body').innerHTML=dentists().map(d=>{
+    const cur=(RULES.dentist_preferences||{})[d.staff_id]||[];
+    const sel=n=>`<select class="pref" data-d="${d.staff_id}" data-n="${n}"><option value="">— none —</option>${asts.map(a=>`<option value="${a.staff_id}" ${cur[n]===a.staff_id?'selected':''}>${a.name}</option>`).join('')}</select>`;
+    return `<div style="margin-bottom:20px"><label>${d.name}</label><div class="row"><div>${sel(0)}</div><div>${sel(1)}</div><div>${sel(2)}</div></div></div>`;
   }).join('');
-  return `<table class="hours-table"><thead><tr><th>Name</th><th>Role</th><th>Hours</th><th>Utilisation</th><th>Est. Cost</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-
-function vacancyBanner(v) {
-  if(!v?.length) return '';
-  return `<div class="vacancy-banner">⚠️ ${v.length} unfilled slot(s):<br>${v.map(x=>`${x.session_key} — Prov ${x.serves_provider_id}: ${x.reason}`).join('<br>')}</div>`;
+async function savePrefs(){
+  const prefs={};
+  dentists().forEach(d=>{const vals=[...document.querySelectorAll(`.pref[data-d="${d.staff_id}"]`)].sort((a,b)=>a.dataset.n-b.dataset.n).map(s=>s.value).filter(Boolean);if(vals.length)prefs[d.staff_id]=vals;});
+  const r=await fetch(`${API}/api/rules/preferences`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({preferences:prefs})});
+  banner('rules-banner',r.ok?'Preferences saved.':'Could not save.',r.ok);if(r.ok)setTimeout(()=>banner('rules-banner',''),2500);
 }
-
-function notesHtml(notes) {
-  if(!notes?.length) return '';
-  return `<div class="notes">${notes.map(n=>`<div class="note">${n}</div>`).join('')}</div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STAFF TAB — LIST
-// ═══════════════════════════════════════════════════════════════════════════
-function renderStaffList() {
-  const rows = STAFF_RAW.map(s => {
-    const active   = s.active !== false;
-    const skills   = (s.skills||[]).map(sk=>`<span class="skill-tag">${sk}</span>`).join('');
-    const inactive = active ? '' : '<span class="inactive-badge">inactive</span>';
-    const deactBtn = active
-      ? `<button class="btn btn-danger btn-sm" onclick="deactivateStaff('${s.staff_id}','${s.name}')">Deactivate</button>`
-      : `<button class="btn btn-secondary btn-sm" onclick="reactivateStaff('${s.staff_id}')">Reactivate</button>`;
-    return `<tr class="${active?'':'inactive'}">
-      <td><strong>${s.name}</strong> ${inactive}</td>
-      <td><span class="role-badge rb-${s.role}">${s.role}</span></td>
-      <td>${skills || '<span style="color:#cbd5e0">none</span>'}</td>
-      <td>$${s.hourly_cost}/h · ${s.max_weekly_hours}h max</td>
-      <td style="white-space:nowrap;display:flex;gap:6px">
-        <button class="btn btn-secondary btn-sm" onclick="openEditForm('${s.staff_id}')">Edit</button>
-        ${deactBtn}
-      </td>
-    </tr>`;
+function renderFixed(){
+  const asts=assistantsList();
+  document.getElementById('fixed-body').innerHTML=dentists().map(d=>{
+    const cur=(RULES.fixed_assistants||{})[d.staff_id]||[];
+    return `<div style="margin-bottom:22px"><label>${d.name}</label><div class="chk-row">${asts.map(a=>`<label class="chk ${cur.includes(a.staff_id)?'on':''}"><input type="checkbox" class="fix" data-d="${d.staff_id}" value="${a.staff_id}" ${cur.includes(a.staff_id)?'checked':''} onchange="this.closest('.chk').classList.toggle('on',this.checked)">${a.name}</label>`).join('')}</div></div>`;
   }).join('');
-  document.getElementById('staffListWrap').innerHTML = `
-    <table class="staff-list-table">
-      <thead><tr><th>Name</th><th>Role</th><th>Skills</th><th>Pay & Hours</th><th>Actions</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STAFF TAB — ADD / EDIT FORM
-// ═══════════════════════════════════════════════════════════════════════════
-function buildSkillsGrid() {
-  const catalogue = RULES.skill_catalogue || [];
-  document.getElementById('skillsGrid').innerHTML = catalogue.map(sk =>
-    `<label class="skill-check" id="sk-${sk}">
-      <input type="checkbox" value="${sk}" onchange="this.closest('label').classList.toggle('checked',this.checked)"> ${sk}
-    </label>`
-  ).join('');
+async function saveFixed(){
+  const fixed={};
+  dentists().forEach(d=>{const vals=[...document.querySelectorAll(`.fix[data-d="${d.staff_id}"]:checked`)].map(c=>c.value);if(vals.length)fixed[d.staff_id]=vals;});
+  const r=await fetch(`${API}/api/rules/fixed-assistants`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({fixed_assistants:fixed})});
+  banner('rules-banner',r.ok?'Fixed assistants saved.':'Could not save.',r.ok);if(r.ok)setTimeout(()=>banner('rules-banner',''),2500);
 }
-
-function toggleProviderField() {
-  const role = document.getElementById('fRole').value;
-  document.getElementById('providerIdField').style.display =
-    (role==='dentist'||role==='hygienist') ? '' : 'none';
-}
-
-function openAddForm() {
-  document.getElementById('formTitle').textContent = 'Add Staff Member';
-  document.getElementById('editingId').value = '';
-  document.getElementById('fName').value = '';
-  document.getElementById('fRole').value = 'assistant';
-  document.getElementById('fProviderId').value = '';
-  document.getElementById('fCost').value = 30;
-  document.getElementById('fMaxHours').value = 40;
-  document.getElementById('fOtHours').value = 40;
-  toggleProviderField();
-  // Clear skills
-  document.querySelectorAll('#skillsGrid input').forEach(cb => {
-    cb.checked = false;
-    cb.closest('label').classList.remove('checked');
-  });
-  // Clear pattern
-  document.querySelectorAll('#patternGrid input').forEach(cb => cb.checked = false);
-  document.getElementById('staffForm').classList.add('open');
-  document.getElementById('staffForm').scrollIntoView({behavior:'smooth'});
-}
-
-function openEditForm(staffId) {
-  const s = STAFF_RAW.find(x => x.staff_id === staffId);
-  if (!s) return;
-  document.getElementById('formTitle').textContent = `Edit — ${s.name}`;
-  document.getElementById('editingId').value = staffId;
-  document.getElementById('fName').value = s.name;
-  document.getElementById('fRole').value = s.role;
-  document.getElementById('fProviderId').value = s.provider_id || '';
-  document.getElementById('fCost').value = s.hourly_cost || 30;
-  document.getElementById('fMaxHours').value = s.max_weekly_hours || 40;
-  document.getElementById('fOtHours').value = s.overtime_threshold || s.max_weekly_hours || 40;
-  toggleProviderField();
-  // Skills
-  const skills = s.skills || [];
-  document.querySelectorAll('#skillsGrid input').forEach(cb => {
-    cb.checked = skills.includes(cb.value);
-    cb.closest('label').classList.toggle('checked', cb.checked);
-  });
-  // Pattern
-  document.querySelectorAll('#patternGrid input').forEach(cb => cb.checked = false);
-  (s.normal_pattern || []).forEach(([day, part]) => {
-    const cb = document.querySelector(`#patternGrid input[data-day="${day}"][data-part="${part}"]`);
-    if (cb) cb.checked = true;
-  });
-  document.getElementById('staffForm').classList.add('open');
-  document.getElementById('staffForm').scrollIntoView({behavior:'smooth'});
-}
-
-function closeForm() {
-  document.getElementById('staffForm').classList.remove('open');
-}
-
-async function saveStaff() {
-  const editingId = document.getElementById('editingId').value;
-  const name      = document.getElementById('fName').value.trim();
-  const role      = document.getElementById('fRole').value;
-  if (!name) { alert('Name is required.'); return; }
-
-  const skills = [...document.querySelectorAll('#skillsGrid input:checked')].map(cb => cb.value);
-  const pattern = [...document.querySelectorAll('#patternGrid input:checked')].map(cb =>
-    [parseInt(cb.dataset.day), cb.dataset.part]
-  );
-  const provId = document.getElementById('fProviderId').value;
-  const body = {
-    name,
-    role,
-    provider_id:        provId ? parseInt(provId) : null,
-    skills,
-    hourly_cost:        parseFloat(document.getElementById('fCost').value),
-    max_weekly_hours:   parseFloat(document.getElementById('fMaxHours').value),
-    overtime_threshold: parseFloat(document.getElementById('fOtHours').value),
-    normal_pattern:     pattern,
-    active:             true,
-  };
-
-  try {
-    const url    = editingId ? `${API}/api/staff/${editingId}` : `${API}/api/staff`;
-    const method = editingId ? 'PUT' : 'POST';
-    const res    = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-    if (!res.ok) { const e=await res.json(); alert(e.detail); return; }
-    await refreshStaff();
-    closeForm();
-  } catch(e) { alert(e.message); }
-}
-
-async function deactivateStaff(staffId, name) {
-  if (!confirm(`Deactivate ${name}? They will no longer appear in roster generation.`)) return;
-  await fetch(`${API}/api/staff/${staffId}`, {method:'DELETE'});
-  await refreshStaff();
-}
-
-async function reactivateStaff(staffId) {
-  const s = STAFF_RAW.find(x => x.staff_id === staffId);
-  if (!s) return;
-  await fetch(`${API}/api/staff/${staffId}`, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({...s, active:true, normal_pattern: s.normal_pattern||[]}),
-  });
-  await refreshStaff();
-}
-
-async function refreshStaff() {
-  const [sc, sr] = await Promise.all([
-    fetch(`${API}/api/config/staff`).then(r=>r.json()),
-    fetch(`${API}/api/staff`).then(r=>r.json()),
-  ]);
-  STAFF     = sc.staff;
-  STAFF_RAW = sr.staff;
-  renderStaffList();
-  renderPreferences();
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STAFF TAB — DENTIST PREFERENCES
-// ═══════════════════════════════════════════════════════════════════════════
-function renderPreferences() {
-  const dentists   = STAFF_RAW.filter(s => s.role==='dentist' && s.active!==false);
-  const assistants = STAFF_RAW.filter(s => s.role==='assistant' && s.active!==false);
-  const prefs      = RULES.dentist_preferences || {};
-
-  const asstOpts = `<option value="">— none —</option>` +
-    assistants.map(a=>`<option value="${a.staff_id}">${a.name}</option>`).join('');
-
-  const rows = dentists.map(d => {
-    const dp = prefs[d.staff_id] || [];
-    const selects = [0,1,2].map(i => {
-      const val = dp[i] || '';
-      return `<select data-dentist="${d.staff_id}" data-rank="${i}">
-        ${asstOpts.replace(`value="${val}"`,`value="${val}" selected`)}
-      </select>`;
-    }).join('');
-    return `<tr>
-      <td><strong>${d.name}</strong></td>
-      <td>${selects}</td>
-    </tr>`;
+function renderCount(){
+  document.getElementById('count-body').innerHTML=dentists().map(d=>{
+    const cur=(RULES.assistant_count_by_dentist||{})[d.staff_id]||'';
+    return `<div class="row" style="margin-bottom:14px;align-items:center"><div style="flex:1"><strong>${d.name}</strong></div><div style="flex:0 0 160px"><input type="number" min="0" max="4" class="cnt" data-d="${d.staff_id}" value="${cur}" placeholder="default"></div></div>`;
   }).join('');
-
-  document.getElementById('preferencesWrap').innerHTML = `
-    <table class="pref-table">
-      <thead><tr><th>Dentist</th><th>1st Choice &nbsp; 2nd Choice &nbsp; 3rd Choice</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
 }
-
-async function savePreferences() {
-  const preferences = {};
-  document.querySelectorAll('[data-dentist]').forEach(sel => {
-    const dId = sel.dataset.dentist;
-    if (!preferences[dId]) preferences[dId] = [];
-    preferences[dId].push(sel.value);
-  });
-  // Remove empty slots and deduplicate
-  Object.keys(preferences).forEach(k => {
-    preferences[k] = [...new Set(preferences[k].filter(Boolean))];
-    if (!preferences[k].length) delete preferences[k];
-  });
-  await fetch(`${API}/api/rules/preferences`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({preferences}),
-  });
-  RULES.dentist_preferences = preferences;
-  flashBanner('prefBanner');
+async function saveCount(){
+  const counts={};document.querySelectorAll('.cnt').forEach(i=>{if(i.value!=='')counts[i.dataset.d]=parseInt(i.value);});
+  const r=await fetch(`${API}/api/rules/assistant-count`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({assistant_count_by_dentist:counts})});
+  banner('rules-banner',r.ok?'Counts saved.':'Could not save.',r.ok);if(r.ok)setTimeout(()=>banner('rules-banner',''),2500);
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STAFF TAB — PROCEDURE RULES
-// ═══════════════════════════════════════════════════════════════════════════
-function renderProcedures() {
-  const procMap   = RULES.procedure_skill_map || {};
-  const catalogue = RULES.skill_catalogue || [];
-
-  const rows = Object.entries(procMap).map(([proc, skills]) =>
-    procedureRow(proc, skills, catalogue)
-  ).join('');
-
-  document.getElementById('proceduresWrap').innerHTML = `
-    <table class="proc-table" id="procTable">
-      <thead><tr><th style="min-width:180px">Procedure</th><th>Required Skills</th><th></th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-function procedureRow(proc, skills, catalogue) {
-  const cat = catalogue.length ? catalogue : (RULES.skill_catalogue||[]);
-  const checks = cat.map(sk => {
-    const checked = skills.includes(sk) ? 'checked' : '';
-    return `<label class="skill-check ${checked?'checked':''}" style="margin-right:6px">
-      <input type="checkbox" data-proc="${proc}" value="${sk}" ${checked}
-        onchange="this.closest('label').classList.toggle('checked',this.checked)"> ${sk}
-    </label>`;
+function renderProcs(){
+  const skills=RULES.skill_catalogue||[],map=RULES.procedure_skill_map||{};
+  document.getElementById('proc-body').innerHTML=Object.keys(map).map(proc=>{
+    const cur=map[proc]||[];
+    return `<div style="margin-bottom:22px"><label>${proc}</label><div class="chk-row">${skills.map(sk=>`<label class="chk ${cur.includes(sk)?'on':''}"><input type="checkbox" class="proc" data-p="${proc}" value="${sk}" ${cur.includes(sk)?'checked':''} onchange="this.closest('.chk').classList.toggle('on',this.checked)">${sk}</label>`).join('')}</div></div>`;
   }).join('');
-  return `<tr data-proc="${proc}">
-    <td><strong>${proc}</strong></td>
-    <td>${checks}</td>
-    <td><button class="btn btn-danger btn-sm" onclick="removeProcedureRow('${proc}')">Remove</button></td>
-  </tr>`;
 }
-
-function addProcedureRow() {
-  const name = document.getElementById('newProcName').value.trim();
-  if (!name) return;
-  const tbody = document.querySelector('#procTable tbody');
-  const row = document.createElement('tr');
-  row.dataset.proc = name;
-  row.innerHTML = procedureRow(name, [], RULES.skill_catalogue||[]);
-  tbody.insertAdjacentHTML('beforeend', procedureRow(name, [], RULES.skill_catalogue||[]).replace('<tr ','<tr '));
-  // simpler: just re-render with the new proc added
-  if (!RULES.procedure_skill_map) RULES.procedure_skill_map = {};
-  RULES.procedure_skill_map[name] = [];
-  renderProcedures();
-  document.getElementById('newProcName').value = '';
+async function saveProcs(){
+  const map={};Object.keys(RULES.procedure_skill_map||{}).forEach(proc=>{map[proc]=[...document.querySelectorAll(`.proc[data-p="${proc}"]:checked`)].map(c=>c.value);});
+  const r=await fetch(`${API}/api/rules/procedures`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({procedure_skill_map:map})});
+  banner('rules-banner',r.ok?'Requirements saved.':'Could not save.',r.ok);if(r.ok)setTimeout(()=>banner('rules-banner',''),2500);
 }
-
-function removeProcedureRow(proc) {
-  if (!confirm(`Remove procedure "${proc}"?`)) return;
-  delete RULES.procedure_skill_map[proc];
-  renderProcedures();
-}
-
-async function saveProcedures() {
-  const procedure_skill_map = {};
-  document.querySelectorAll('#procTable tbody tr[data-proc]').forEach(row => {
-    const proc = row.dataset.proc;
-    const skills = [...row.querySelectorAll('input[type=checkbox]:checked')].map(cb=>cb.value);
-    procedure_skill_map[proc] = skills;
-  });
-  await fetch(`${API}/api/rules/procedures`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({procedure_skill_map}),
-  });
-  RULES.procedure_skill_map = procedure_skill_map;
-  flashBanner('procBanner');
-}
-
-function flashBanner(id) {
-  const el = document.getElementById(id);
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 3000);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-init();
+thisWeek();
 </script>
 </body>
 </html>
