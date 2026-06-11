@@ -105,7 +105,8 @@ def assign(
 
             fixed      = cfg.rules.fixed_assistants.get(dentist_sid, []) if dentist_sid else []
             proc_count = d.assistant_count_by_provider.get(prov_id, cfg.clinic.assistants_per_dentist)
-            count      = max(proc_count, len(fixed))
+            per_dentist_count = cfg.rules.assistant_count_by_dentist.get(dentist_sid, 0)
+            count = max(proc_count, len(fixed), per_dentist_count)
             extra_needs_skill = d.extra_needs_skill_by_provider.get(prov_id, False)
 
             already_serving = [a for a in result.assignments

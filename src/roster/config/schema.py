@@ -43,6 +43,7 @@ class RulesConfig:
     allow_overtime: bool = True
     assistant_requirements: dict[str, dict] = field(default_factory=dict)
     fixed_assistants: dict[str, list[str]] = field(default_factory=dict)
+    assistant_count_by_dentist: dict[str, int] = field(default_factory=dict)
 
 @dataclass
 class AppConfig:

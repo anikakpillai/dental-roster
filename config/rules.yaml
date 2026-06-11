@@ -22,3 +22,9 @@ allow_overtime: true
 # If a fixed assistant is unavailable that day, the engine falls back to scoring + warns.
 fixed_assistants:
   D_MK: [A_SARA, A_MAYA]
+
+# Default number of assistants a dentist gets, independent of procedure.
+# The effective count is the maximum of: procedure rule, fixed-assistant count,
+# and this per-dentist default.
+assistant_count_by_dentist:
+  D_MARIO: 1
