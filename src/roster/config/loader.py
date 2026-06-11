@@ -65,6 +65,7 @@ def load_config_dir(config_dir: str | Path) -> AppConfig:
             overtime_threshold=float(s.get("overtime_threshold", s.get("max_weekly_hours", 40.0))),
             arrival_buffer_min=arrival_buffer,
             recurring_days_off=recurring_off,
+            max_daily_hours=float(s.get("max_daily_hours", 24.0)),
             normal_pattern=pattern,
         ))
 

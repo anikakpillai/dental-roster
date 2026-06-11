@@ -39,6 +39,7 @@ class StaffMember:
     hourly_cost:            float                 = 30.0
     arrival_buffer_min:     int                   = 0
     recurring_days_off:     frozenset[int]        = field(default_factory=frozenset)
+    max_daily_hours:        float                 = 24.0
     # Which (weekday, daypart) combos this person normally works.
     # Empty = available every session (typical for dentists).
     # weekday: 0=Mon, 1=Tue ... 5=Sat
