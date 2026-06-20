@@ -1,16 +1,16 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import date, time
+from datetime import date
 from enum import Enum
 from typing import Optional
 
 
-# ── Enums ──────────────────────────────────────────────────────────────────
-
 class Role(str, Enum):
-    DENTIST    = "dentist"
-    HYGIENIST  = "hygienist"
-    ASSISTANT  = "assistant"
+    DENTIST     = "dentist"
+    HYGIENIST   = "hygienist"
+    ASSISTANT   = "assistant"
+    FRONT_DESK  = "front_desk"
+    COORDINATOR = "coordinator"
 
 
 class DayPart(str, Enum):
@@ -19,80 +19,77 @@ class DayPart(str, Enum):
 
 
 class Severity(str, Enum):
-    INFO     = "info"
-    WARNING  = "warning"
     CRITICAL = "critical"
+    WARNING  = "warning"
+    INFO     = "info"
 
-
-# ── Core shapes ────────────────────────────────────────────────────────────
 
 @dataclass
 class StaffMember:
-    """One person who can be rostered."""
-    staff_id:               str
-    name:                   str
-    role:                   Role
-    provider_id:            Optional[int]         = None
-    skills:                 frozenset[str]        = field(default_factory=frozenset)
-    max_weekly_hours:       float                 = 40.0
-    overtime_threshold:     float                 = 40.0
-    hourly_cost:            float                 = 30.0
-    arrival_buffer_min:     int                   = 0
-    recurring_days_off:     frozenset[int]        = field(default_factory=frozenset)
-    max_daily_hours:        float                 = 24.0
-    # Which (weekday, daypart) combos this person normally works.
-    # Empty = available every session (typical for dentists).
-    # weekday: 0=Mon, 1=Tue ... 5=Sat
-    normal_pattern:         frozenset[tuple[int, DayPart]] = field(default_factory=frozenset)
-    active:                 bool                  = True
+    staff_id:           str
+    name:               str
+    role:               Role
+    skills:             set
+    hourly_cost:        float        = 30.0
+    max_weekly_hours:   float        = 40.0
+    max_daily_hours:    float        = 9.0
+    overtime_threshold: float        = 40.0
+    arrival_buffer_min: int          = 30
+    provider_id:        Optional[int] = None
+    active:             bool         = True
+    recurring_days_off: list         = field(default_factory=list)
+    normal_pattern:     list         = field(default_factory=list)
+    dual_role:          Optional[str] = None
+    preferred_role:     Optional[str] = None
+    shift_start:        Optional[str] = None
+    shift_end:          Optional[str] = None
+    monday_cap_hours:   Optional[float] = None
 
 
 @dataclass
 class Session:
-    """A single working block — one date + one daypart (morning or afternoon)."""
     date:    date
     daypart: DayPart
 
     @property
     def key(self) -> str:
-        """Unique string ID for this session e.g. '2026-06-01|morning'"""
         return f"{self.date.isoformat()}|{self.daypart.value}"
 
 
 @dataclass
 class AppointmentMeta:
-    """
-    Metadata about one Open Dental appointment.
-    Contains NO patient-identifying information — only scheduling metadata.
-    """
     apt_id:             int
-    session_key:        str           # links back to a Session
-    provider_id:        Optional[int] # treating dentist (None = hygiene-only)
+    session_key:        str
+    provider_id:        Optional[int]
     hygienist_id:       Optional[int]
     operatory:          str
     duration_min:       int
-    assistant_min:      int           # how many minutes an assistant is needed
-    procedure_category: Optional[str] # e.g. "Implant", "Hygiene", "Exam"
+    assistant_min:      int
+    procedure_category: Optional[str]
 
 
 @dataclass
 class Assignment:
-    """One staff member assigned to one session."""
-    session_key: str
-    staff_id:    str
-    staff_name:  str
-    role:        Role
-    hours:       float
-    serves_provider_id: Optional[int]  = None
-    support_role:       Optional[str]  = None
-    reasons:     list[str] = field(default_factory=list)  # why this person was chosen
+    session_key:        str
+    staff_id:           str
+    staff_name:         str
+    role:               Role
+    hours:              float
+    reasons:            list = field(default_factory=list)
+    serves_provider_id: Optional[int] = None
+    support_role:       Optional[str] = None
 
 
 @dataclass
 class Warning:
-    """Something the practice manager needs to know about."""
     session_key:  str
     severity:     Severity
+    warning_type: str
     message:      str
-    warning_type: str = "general"
     staff_id:     Optional[str] = None
+
+
+@dataclass
+class PatternTiming:
+    total_min:     int
+    assistant_min: int

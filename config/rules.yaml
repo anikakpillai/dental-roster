@@ -2,40 +2,98 @@
 # UNITY DENTAL — RULES
 # ============================================================
 
-# Each dentist's preferred assistants, in order (used when no fixed assistant).
+# Dentist preferred assistants in priority order.
+# Used when no fixed assistant applies.
 dentist_preferences:
   D_PILLAI: [A_RISHABH, A_RAJAT]
-  D_MARIO:  [A_KALPANA, A_RAJAT, A_LIKHITHA, A_PARI, A_RISHABH]
-  D_LALEH:  [A_LIKHITHA, A_PARI, A_RISHABH]
+  D_MARIO:  [A_RAJAT, A_LIKHITHA, A_PARI, A_RISHABH, A_DEEKSHI]
 
 # Assistants ALWAYS paired with a dentist (overrides preferences).
 fixed_assistants:
-  D_PILLAI: [A_RISHABH, A_RAJAT]    # Dr Pillai always has both
+  D_PILLAI: [A_RISHABH, A_RAJAT]
 
 # Default number of assistants per dentist.
 assistant_count_by_dentist:
   D_PILLAI: 2
-  D_MARIO:  1     # becomes 2 for surgery/implant automatically (see below);
-                  # large-value / >8h / simultaneous-booking days → bump manually
-  D_LALEH:  1
+  D_MARIO:  1     # bumps to 2 automatically for Surgery/Implant procedures
 
-# Procedures that need a 2nd assistant, applied from Open Dental procedure type.
+# ── SHIFT SHAPE RULES ────────────────────────────────────────────────────────
+# Applies to all assistants unless overridden per staff member.
+# The engine tracks how many days each person has worked this week.
+# Days 1-4: target 8h, allow up to 9h without warning.
+# Day 5:    hard cap 6h so total stays at or under 40h.
+shift_shape:
+  standard_day_hours: 8.0
+  standard_day_max:   9.0
+  fifth_day_target:   5.0
+  fifth_day_cap:      6.0
+
+# ── ASSISTANT SCORING WEIGHTS ────────────────────────────────────────────────
+# Priority order reflected in weights:
+# 1. Hours headroom (under 40h)     — 40pts
+# 2. Shift shape compliance         — 30pts
+# 3. Dentist preference             — 20pts
+# 4. Usual working day              — 15pts
+# 5. Fairness (balance across staff)— 10pts
+# 6. Cost                           —  5pts
+scoring_weights:
+  hours_headroom: 40
+  shift_shape:    30
+  preference:     20
+  usual_day:      15
+  fairness:       10
+  cost:            5
+
+# ── RAJAT SPECIAL RULE ───────────────────────────────────────────────────────
+# Reverse 40h logic: Monday = 6h hard cap, then 4x8h on remaining days.
+# Strong preference: skip Rajat on Monday if Likhitha is available.
+rajat_monday_rule:
+  staff_id: A_RAJAT
+  avoid_if_available: A_LIKHITHA
+  monday_cap_hours: 6.0
+
+# ── FRONT DESK RULES ─────────────────────────────────────────────────────────
+# One opener + one closer minimum per day.
+# 3rd person triggered ONLY if all 3 doctors are working simultaneously
+# and only 1 front desk person covers that period.
+# Sravani: preferred closer, schedule first to maximise her hours.
+# Ziya, Simran: preferred openers.
+# Deekshi: dual-role, counts toward front desk coverage when not clinical.
+# Nav: fixed 9:30-17:30, independent — never counts toward opener/closer slots.
+front_desk:
+  preferred_closer:  F_SRAVANI
+  preferred_openers: [F_ZIYA, F_SIMRAN]
+  third_person_trigger: 3           # all 3 doctors must be working
+  sravani_priority: true            # schedule Sravani first, under 40h
+  weekly_day_off: true              # every front desk staff must get 1 day off/week
+  dual_role_staff: [A_DEEKSHI]      # counts toward front desk when not clinical
+
+# ── ARRIVAL BUFFERS ──────────────────────────────────────────────────────────
+# Receptionist/front desk opening the day: 90min before first patient.
+# Dental assistants starting the day: 30min before first patient.
+# Akash exception: 120min before first patient.
+# Nav: fixed shift, no buffer calculation needed.
+arrival_buffers:
+  front_desk_opener_min: 90
+  assistant_min: 30
+  akash_min: 120
+
+# ── PROCEDURE SKILL REQUIREMENTS ─────────────────────────────────────────────
 assistant_requirements:
   Surgery:
     count: 2
-    extra_needs_skill: false        # 2nd assistant just preps
+    extra_needs_skill: false
   Implant:
     count: 2
-    extra_needs_skill: true         # 2nd assistant also chairside (needs implant skill)
+    extra_needs_skill: true
 
-# Which skill an assistant needs to assist each procedure type.
 procedure_skill_map:
-  Implant: [implant]
-  Surgery: [surgery]
-  Endodontics: [endo]
-  Orthodontics: [ortho]
-  Hygiene/Recall: [hygiene]
+  Implant:         [implant]
+  Surgery:         [surgery]
+  Endodontics:     [endo]
+  Orthodontics:    [ortho]
+  Hygiene/Recall:  [hygiene]
 
-skill_catalogue: [general, implant, surgery, endo, ortho, restorative, hygiene]
+skill_catalogue: [general, implant, surgery, endo, ortho, restorative, hygiene, reception]
 
-allow_overtime: true
+allow_overtime: false
