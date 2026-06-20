@@ -1,147 +1,155 @@
-# ============================================================
-# UNITY DENTAL — STAFF
-# ============================================================
-# weekday codes for recurring_days_off: 0=Mon 1=Tue 2=Wed 3=Thu 4=Fri 5=Sat
-#
-# ⚠️  TO CONFIRM AFTER DATABASE CONNECTION:
-#   - provider_id values are PLACEHOLDERS (1,2,3,4). Replace with the
-#     real Open Dental ProvNum for each dentist/hygienist once connected.
-#   - hourly_cost values are PLACEHOLDERS. Dentists set to 0 (not costed).
-#     Update assistant rates to real numbers for accurate payroll estimates.
-#   - skills are best-guess. Adjust in the Staff editor as needed.
-# ============================================================
 staff:
-  # ---------------- DENTISTS ----------------
-  - staff_id: D_PILLAI
-    name: "Dr Pillai"
-    role: dentist
-    provider_id: 1            # PLACEHOLDER — real ProvNum TBD
-    skills: [general, implant, surgery]
-    hourly_cost: 0
-    max_weekly_hours: 40
-
-  - staff_id: D_MARIO
-    name: "Dr Mario"
-    role: dentist
-    provider_id: 2            # PLACEHOLDER — real ProvNum TBD
-    skills: [general, restorative]
-    hourly_cost: 0
-    max_weekly_hours: 40
-
-  - staff_id: D_LALEH
-    name: "Dr Laleh"
-    role: dentist
-    provider_id: 3            # PLACEHOLDER — real ProvNum TBD
-    skills: [general]
-    hourly_cost: 0
-    max_weekly_hours: 40
-
-  # ---------------- HYGIENIST (placeholder) ----------------
-  - staff_id: H_HYG1
-    name: "Hygienist (placeholder)"
-    role: hygienist
-    provider_id: 4            # PLACEHOLDER — add real hygienists once known
-    skills: [hygiene]
-    hourly_cost: 0
-    max_weekly_hours: 40
-
-  # ---------------- ASSISTANTS ----------------
-  - staff_id: A_SRAVANI
-    name: "Sravani"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30           # PLACEHOLDER
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [2]           # off Wed (half-days other days — confirm manually)
-
-  - staff_id: A_NAV
-    name: "Nav"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [2]           # off Wed (half-day Sat — confirm manually)
-
-  - staff_id: A_DEEKSHI
-    name: "Deekshi"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [2]           # off Wed (also off Sat when Dr Pillai is off — handle manually)
-
-  - staff_id: A_AKASH
-    name: "Akash"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 24
-    max_daily_hours: 7.5
-    arrival_buffer_min: 120           # arrives 2h before first patient
-    recurring_days_off: [3, 4, 5]     # works Mon–Wed only (until 3pm — confirm)
-
-  - staff_id: A_SIMRAN
-    name: "Simran"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [5]           # off Sat — changes from Jun 14 (update manually)
-
-  - staff_id: A_RAJAT
-    name: "Rajat"
-    role: assistant
-    skills: [general, implant, surgery]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [2]           # off Wed (Mon ~6h shift — confirm)
-
-  - staff_id: A_RISHABH
-    name: "Rishabh"
-    role: assistant
-    skills: [general, implant, surgery]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [0, 2]        # off Mon + Wed
-
-  - staff_id: A_LIKHITHA
-    name: "Likhitha"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [5]           # off Sat
-
-  - staff_id: A_PARI
-    name: "Pari"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 40
-    max_daily_hours: 7.5
-    arrival_buffer_min: 30
-    recurring_days_off: [2, 3]        # off Wed + Thu until end-June, then off Tue (update manually)
-
-  - staff_id: A_KALPANA
-    name: "Kalpana"
-    role: assistant
-    skills: [general]
-    hourly_cost: 30
-    max_weekly_hours: 20
-    max_daily_hours: 8.5              # works 8–8.5h on her days
-    arrival_buffer_min: 30
-    recurring_days_off: [0, 2, 4, 5]  # Tue + Thu only
+- staff_id: D_PILLAI
+  name: Dr Pillai
+  role: dentist
+  provider_id: 1
+  skills:
+  - general
+  - implant
+  - surgery
+  hourly_cost: 0
+  max_weekly_hours: 40
+- staff_id: D_MARIO
+  name: Dr Mario
+  role: dentist
+  provider_id: 2
+  skills:
+  - general
+  - restorative
+  hourly_cost: 0
+  max_weekly_hours: 40
+- staff_id: D_LALEH
+  name: Dr Laleh
+  role: dentist
+  provider_id: 3
+  skills:
+  - general
+  hourly_cost: 0
+  max_weekly_hours: 40
+- staff_id: H_HYG1
+  name: Hygienist (placeholder)
+  role: hygienist
+  provider_id: 4
+  skills:
+  - hygiene
+  hourly_cost: 0
+  max_weekly_hours: 40
+- staff_id: A_SRAVANI
+  name: Sravani
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 2
+- staff_id: A_NAV
+  name: Nav
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 2
+- staff_id: A_DEEKSHI
+  name: Deekshi
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 2
+- staff_id: A_AKASH
+  name: Akash
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 24
+  max_daily_hours: 7.5
+  arrival_buffer_min: 120
+  recurring_days_off:
+  - 3
+  - 4
+  - 5
+- staff_id: A_SIMRAN
+  name: Simran
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30.0
+  max_weekly_hours: 40.0
+  active: true
+  normal_pattern: []
+- staff_id: A_RAJAT
+  name: Rajat
+  role: assistant
+  skills:
+  - general
+  - implant
+  - surgery
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 2
+- staff_id: A_RISHABH
+  name: Rishabh
+  role: assistant
+  skills:
+  - general
+  - implant
+  - surgery
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 0
+  - 2
+- staff_id: A_LIKHITHA
+  name: Likhitha
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 5
+- staff_id: A_PARI
+  name: Pari
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 40
+  max_daily_hours: 7.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 2
+  - 3
+- staff_id: A_KALPANA
+  name: Kalpana
+  role: assistant
+  skills:
+  - general
+  hourly_cost: 30
+  max_weekly_hours: 20
+  max_daily_hours: 8.5
+  arrival_buffer_min: 30
+  recurring_days_off:
+  - 0
+  - 2
+  - 4
+  - 5
