@@ -153,3 +153,36 @@ def build_roster(
         notes=notes,
         warnings=warnings,
     )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI ROSTER (Gemini + deterministic validator)
+# Separate from build_roster() above. Returns a JSON-ready dict, not a Roster.
+# ─────────────────────────────────────────────────────────────────────────────
+def build_ai_roster(
+    cfg: AppConfig,
+    week_start: date,
+    week_end: date,
+    weekly: "WeeklyInput | None" = None,
+    manager_notes: str = "",
+) -> dict:
+    """
+    Build a roster using the AI engine. Pipeline:
+      appointments -> demand (facts) -> context (+ manager notes)
+      -> Gemini proposes -> validator enforces -> compliant roster dict.
+
+    Returns the dict directly (already JSON-serialisable):
+      {"roster": [...], "warnings": [...], "summary": "..."}
+    """
+    from roster.engine.availability import build_sessions, WeeklyInput as _WI
+    from roster.engine.demand import build_demand
+    from roster.engine.ai_context import assemble_context
+    from roster.engine.ai_roster import generate_ai_roster
+
+    weekly = weekly or _WI()
+
+    sessions = build_sessions(cfg, week_start, week_end)
+    appointments = get_week_appointments(week_start, week_end)
+    demand = build_demand(cfg, sessions, appointments)
+    ctx = assemble_context(cfg, week_start, week_end, demand, weekly,
+                           manager_notes=manager_notes)
+    return generate_ai_roster(ctx, cfg=cfg)

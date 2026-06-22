@@ -23,7 +23,7 @@ from roster.config.writer import (
     save_rules_raw, save_staff_raw,
 )
 from roster.engine.availability import WeeklyInput
-from roster.engine.roster_service import build_roster
+from roster.engine.roster_service import build_roster, build_ai_roster
 
 app = FastAPI(title="Dental Roster API", version="2.0.0")
 
@@ -56,6 +56,10 @@ class WeeklyExceptionsInput(BaseModel):
     late_starts:    list[LateStartInput]   = []
     early_finishes: list[EarlyFinishInput] = []
     notes:          list[str]              = []
+
+class AIRosterInput(BaseModel):
+    exceptions:    WeeklyExceptionsInput | None = None
+    manager_notes: str = ""
 
 class StaffInput(BaseModel):
     recurring_days_off: list[int] = []
@@ -177,6 +181,25 @@ def get_roster_with_exceptions(
         weekly = _build_weekly(body) if body else WeeklyInput()
         roster = build_roster(cfg, week_start, week_end, weekly=weekly)
         return _serialise_roster(roster)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ai-roster")
+def get_ai_roster(
+    week_start: date, week_end: date,
+    body: AIRosterInput = None,
+):
+    """AI-built roster (Gemini + validator). Accepts optional manager_notes."""
+    try:
+        cfg = load_config_dir(CONFIG_DIR)
+        weekly = WeeklyInput()
+        notes = ""
+        if body:
+            if body.exceptions:
+                weekly = _build_weekly(body.exceptions)
+            notes = body.manager_notes or ""
+        return build_ai_roster(cfg, week_start, week_end, weekly=weekly, manager_notes=notes)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
