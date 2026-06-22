@@ -8,6 +8,23 @@ from roster.config.schema import (
 )
 
 
+def _hours_from_session(s: dict) -> float:
+    """Session length in hours. Supports explicit `hours` OR `start`/`end` times."""
+    if "hours" in s and s["hours"] is not None:
+        return float(s["hours"])
+    start = s.get("start")
+    end = s.get("end")
+    if start and end:
+        sh, sm = [int(x) for x in str(start).split(":")]
+        eh, em = [int(x) for x in str(end).split(":")]
+        hours = (eh + em / 60.0) - (sh + sm / 60.0)
+        if hours < 0:
+            hours += 24
+        return round(hours, 2)
+    daypart = str(s.get("daypart", "")).lower()
+    return 5.0 if daypart == "morning" else 4.0
+
+
 def load_config_dir(config_dir: Path) -> AppConfig:
     staff_raw  = yaml.safe_load((config_dir / "staff.yaml").read_text())
     rules_raw  = yaml.safe_load((config_dir / "rules.yaml").read_text())
@@ -57,12 +74,13 @@ def load_config_dir(config_dir: Path) -> AppConfig:
         scoring_weights=rules_raw.get("scoring_weights", {}),
     )
 
+    raw_sessions = clinic_raw.get("sessions", [
+        {"daypart": "morning", "hours": 5.0},
+        {"daypart": "afternoon", "hours": 4.0},
+    ])
     sessions = [
-        ClinicSession(daypart=s["daypart"], hours=float(s["hours"]))
-        for s in clinic_raw.get("sessions", [
-            {"daypart": "morning", "hours": 5.0},
-            {"daypart": "afternoon", "hours": 4.0},
-        ])
+        ClinicSession(daypart=s["daypart"], hours=_hours_from_session(s))
+        for s in raw_sessions
     ]
 
     clinic = ClinicConfig(
