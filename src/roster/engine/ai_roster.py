@@ -1,9 +1,10 @@
-"""AI Roster Engine (Gemini) with deterministic validation."""
+"""AI Roster Engine (Gemini, google-genai SDK) with deterministic validation."""
 from __future__ import annotations
 import json
 import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from roster.engine.ai_context import RosterContext
 
@@ -107,8 +108,6 @@ DAY_NAMES_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Satur
 
 
 def _available_staff_per_day(ctx) -> dict:
-    """Per-date list of staff who CAN work that day, from usual days off +
-    this week's day_off exceptions. The AI must pick only from these pools."""
     from datetime import date as _date
     exc_off = set()
     for item in ctx.weekly_availability:
@@ -133,9 +132,18 @@ def _available_staff_per_day(ctx) -> dict:
     return out
 
 
-def _call_gemini(model, message: str) -> dict:
+def _call_gemini(client, message: str) -> dict:
     try:
-        response = model.generate_content(message)
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=message,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                max_output_tokens=MAX_TOKENS,
+                temperature=0.2,
+                response_mime_type="application/json",
+            ),
+        )
     except Exception as e:
         raise RuntimeError(f"Gemini API call failed: {e}")
     text = (response.text or "").strip()
@@ -148,28 +156,18 @@ def _call_gemini(model, message: str) -> dict:
         obj, _end = json.JSONDecoder().raw_decode(text)
         return obj
     except json.JSONDecodeError as e:
-        raise RuntimeError(f"Gemini returned invalid JSON: {e}\nFirst 500 chars:\n{text[:500]}")
+        raise RuntimeError("Gemini returned invalid JSON: " + str(e) + " | first 500 chars: " + text[:500])
 
 
 def generate_ai_roster(ctx: RosterContext, cfg=None, max_retries: int = 2) -> dict:
-    """AI proposes, the validator enforces hard rules. Pass cfg in production."""
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set.")
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(
-        model_name=MODEL,
-        system_instruction=SYSTEM_PROMPT,
-        generation_config={
-            "max_output_tokens": MAX_TOKENS,
-            "temperature": 0.2,
-            "response_mime_type": "application/json",
-        },
-    )
+    client = genai.Client(api_key=api_key)
 
     base_message = _build_user_message(ctx)
-    result = _call_gemini(model, base_message)
+    result = _call_gemini(client, base_message)
 
     if cfg is None:
         return result
@@ -182,7 +180,7 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, max_retries: int = 2) -> di
         attempt += 1
         feedback = build_retry_feedback(res)
         retry_message = base_message + "\n\n" + feedback
-        result = _call_gemini(model, retry_message)
+        result = _call_gemini(client, retry_message)
         res = validate_roster(cfg, result)
 
     result = res.corrected_roster
@@ -190,12 +188,12 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, max_retries: int = 2) -> di
     for v in res.violations:
         result["warnings"].append({
             "severity": v.severity,
-            "message": (f"[{v.rule}] " + v.message + (f" ({v.day})" if v.day else "")),
+            "message": ("[" + v.rule + "] " + v.message + ((" (" + v.day + ")") if v.day else "")),
         })
     if res.needs_retry:
         result["warnings"].insert(0, {
             "severity": "critical",
-            "message": (f"Some hard rules could not be satisfied automatically after "
-                        f"{max_retries} retry attempt(s). Review the critical warnings below."),
+            "message": ("Some hard rules could not be satisfied automatically after "
+                        + str(max_retries) + " retry attempt(s). Review the critical warnings below."),
         })
     return result

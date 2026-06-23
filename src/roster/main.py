@@ -8,6 +8,11 @@ Endpoints:
   Config:  GET /api/config/staff
 """
 from __future__ import annotations
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # load GEMINI_API_KEY etc. from .env if present
+except Exception:
+    pass
 from datetime import date
 from pathlib import Path
 from typing import Optional
