@@ -122,6 +122,7 @@ staff:
   max_daily_hours: 9.0
   arrival_buffer_min: 30
   recurring_days_off: [2]
+  active: false
   active: true
 
 - staff_id: A_AKASH
