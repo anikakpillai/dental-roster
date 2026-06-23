@@ -9,6 +9,7 @@ _ROLE_MAP = {
     "assistant":   Role.ASSISTANT,
     "front_desk":  Role.FRONT_DESK,
     "coordinator": Role.COORDINATOR,
+    "sterilization": Role.STERILIZATION,
 }
 
 _BUFFER_DEFAULTS = {
@@ -17,6 +18,7 @@ _BUFFER_DEFAULTS = {
     Role.ASSISTANT:   30,
     Role.FRONT_DESK:  90,
     Role.COORDINATOR: 0,
+    Role.STERILIZATION: 120,
 }
 
 

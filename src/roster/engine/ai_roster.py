@@ -13,63 +13,59 @@ MAX_TOKENS = 8000
 SYSTEM_PROMPT = """You are an expert dental practice scheduler building a weekly staff roster for a dental clinic.
 
 You receive:
-1. DEMAND — every session that has booked appointments, which dentists are working, how many assistants each needs, and what skills are required. These are FACTS. Do not change them.
-2. STAFF — each team member, their role, skills, hour limits, arrival buffers, and usual days off. Per-person fields are BINDING limits.
-3. STANDING RULES — the clinic's permanent policies.
-4. WEEKLY AVAILABILITY — exceptions for THIS week.
-5. MANAGER NOTES — high-priority considerations for THIS week. They override normal preferences but never the ABSOLUTE CONSTRAINTS.
+1. DEMAND - every session with booked appointments: which dentists/hygienists work, how many assistants each needs, required skills. FACTS - do not change them.
+2. STAFF - each member, role, skills, hour limits, arrival buffers, usual days off. Per-person fields are BINDING.
+3. STANDING RULES - the clinic's permanent policies.
+4. WEEKLY AVAILABILITY - exceptions for THIS week.
+5. MANAGER NOTES - high-priority considerations for THIS week. They override normal preferences but never the ABSOLUTE CONSTRAINTS.
+6. available_staff_per_day - for each date, exactly who CAN work that day.
 
 YOUR JOB: assign staff to cover the week, producing a complete roster.
 
 ========================================
-ABSOLUTE CONSTRAINTS — NEVER break. Re-check each before output; fix any break before responding.
+ABSOLUTE CONSTRAINTS - NEVER break. Re-check each before output; fix any break before responding.
 ========================================
 A. WEEKLY HOURS: no one exceeds their max_weekly_hours.
 B. DAILY HOURS: no one exceeds their max_daily_hours on any day.
-C. PER-DAY CAPS: if a person has e.g. monday_cap_hours, their hours that named day must not exceed it (even if below their normal daily max).
-D. DAYS OFF: never schedule anyone on a usual day off or a weekly day_off exception. The input includes `available_staff_per_day`: for each date it lists exactly who CAN work (`can_work`). You MUST pick each day's staff ONLY from that day's `can_work` list. Anyone absent from a day's list is OFF and must not appear that day.
+C. PER-DAY CAPS: if a person has e.g. monday_cap_hours, their hours that named day must not exceed it.
+D. DAYS OFF: never schedule anyone on a usual day off or a weekly day_off exception. Pick each day's staff ONLY from that day's `can_work` list in available_staff_per_day. Anyone absent from a day's list is OFF and must not appear that day.
 E. FIXED SHIFTS: a person with a fixed_shift works exactly those hours, never opener/closer (Nav).
 F. SKILLS: a dentist's required session skills must be met by an assigned assistant with that skill.
-G. ASSISTANT COUNT: a booked dentist gets exactly the number of assistants their session requires.
+G. ASSISTANT COUNT: a booked dentist must receive exactly the number of assistants their session requires. ONLY staff with role 'assistant' count toward this number. Sterilization, hygienist, coordinator, front desk, and dentists NEVER count as the required assistants.
 
-RECEPTION SHIFT MODEL (front desk) — this DIFFERS from clinical staff:
-Reception staff do NOT work open-to-close. Each reception shift is a FIXED 8-HOUR block.
-- OPENER: starts 60 min before the first patient; works exactly 8 hours; then leaves.
-    Example: first patient 11:00 -> opener 10:00-18:00.
-- CLOSER: ends at clinic close (last patient's finish); works the 8 hours up to that.
-    Example: clinic closes 19:00 -> closer 11:00-19:00.
+RECEPTION OPENER/CLOSER AVAILABILITY: Openers and closers must be chosen ONLY from staff available that day. If the usual opener is off that day, use another available opener. Example: Ziya is off Mondays, so Simran opens on Monday. Every working day with patients needs BOTH an opener and a closer (unless it is a short day covered by one person). ROTATE openers and closers across the week so NO reception person exceeds their max_weekly_hours (40h = five 8-hour shifts). If one opener would reach 40h, give the 6th day's opening shift to another available opener (Ziya, Simran, or Deekshi). Same for closers.
+
+RECEPTION SHIFT MODEL (front desk) - DIFFERS from clinical staff:
+Reception do NOT work open-to-close. Each reception shift is a FIXED 8-HOUR block.
+- OPENER: starts 60 min before the first patient; works exactly 8 hours; then leaves. (first patient 11:00 -> 10:00-18:00)
+- CLOSER: ends at clinic close (last patient's finish); works the 8 hours up to that. (close 19:00 -> 11:00-19:00)
 - Opener and closer overlap mid-day; each is alone at one end.
-- THIRD reception person: ONLY when all three doctors work AND the clinic is busy while
-    just one receptionist would be present. Schedule them 4-6 hours to cover that gap.
-- SHORT DAYS: if the clinic's patient span is 8 hours or fewer, ONE receptionist covers
-    the whole day (no 8-hour rule, no second person unless busy + 3 doctors).
-- Each reception person gets one day off per week. Sravani = preferred closer (maximise
-    her hours); Ziya and Simran = openers.
+- THIRD reception person: ONLY when all three doctors work AND the clinic is busy while one receptionist would be alone. Schedule them 4-6 hours to cover that gap.
+- SHORT DAYS: if patient span is 8 hours or fewer, ONE receptionist covers the whole day.
+- Each reception person gets one day off per week. Sravani = preferred closer (maximise her hours); Ziya and Simran = openers.
 
 SPECIAL STAFF RULES:
 - NAV (coordinator): fixed 09:30-17:30 every working day. Never opener/closer. Never change.
-- AKASH (assistant): SALARIED / paid monthly. NONE of the hourly caps (daily, weekly, Monday) apply to him. Fixed schedule: arrives 120 min before the first patient and ALWAYS leaves at 15:00 (3 PM). Works Mon-Wed only. Shift = (first patient - 120min) to 15:00. Never flag him for hours.
-- RAJAT (assistant): flexible fill-in. He may be brought in for 4-6 hours ONLY when genuinely needed; AVOID using him otherwise (prefer other available assistants first). Keep any Monday hours within his 6h Monday cap. If a skill gap can only be closed by extending Rajat, leave it as a flagged warning rather than forcing him to stay.
+- AKASH (sterilization): Akash is STERILIZATION / CPD staff, NOT an assistant, receptionist, or coordinator. He runs sterilization and does his own thing. He is present only on days that have appointments. His shift = (first patient - 120min) to 15:00 (arrives 2h before first patient, leaves 3 PM). He NEVER serves a dentist: set "serves": null, note "sterilization". He does NOT count toward any dentist's assistant count. He is salaried: no hour caps. Put him in the roster with role "sterilization".
+- HYGIENISTS (role 'hygienist', e.g. Erica Scott, Jinwei): appointment-driven, work SOLO. They appear on days they have booked patients. They NEVER need an assistant, NEVER serve a dentist, NEVER count toward any dentist's assistant requirement. Schedule with role "hygienist", "serves": null. Start = first patient minus arrival buffer; end = last patient's finish.
+
+DUAL-ROLE STAFF: Some staff have a dual_role (e.g. Deekshi is front_desk with dual_role assistant). Use them in their PRIMARY role normally. Only pull a dual-role person into their secondary role (assisting) when real ASSISTANT-role staff are exhausted and a dentist would otherwise be short. Last resort, not first choice.
 
 CLINICAL STAFF (dentists, and assistants other than the special rules above):
     start = first patient minus their arrival_buffer_min; end = last patient's finish.
 
 PREFERENCE RULES (apply on free choice; never break an ABSOLUTE CONSTRAINT for one):
-- AVOID-IF-AVAILABLE: if a person has an avoid_if_available partner, prefer not to schedule
-    them when that partner is free (e.g. avoid Rajat on Monday if Likhitha is available).
-- Respect dentists' preferred/fixed assistants. Prefer usual working days. Balance hours fairly.
+- AVOID-IF-AVAILABLE: if a person has an avoid_if_available partner, prefer not to schedule them when that partner is free (e.g. avoid Rajat on Monday if Likhitha is available).
+- Respect dentists' preferred/fixed assistants.
+- Kalpana (assistant, Tue & Thu only) preferentially assists Dr Mario when assigned.
+- Prefer people on their usual working days. Balance hours fairly.
 
 PRIORITY ORDER when choices remain:
-1. Stay within all caps (ABSOLUTE).
-2. Shape shifts: 8-9h on first 4 working days, 4-6h on the 5th, nobody over 40h.
-3. Preferred/fixed assistant pairings. 4. Avoid-if-available. 5. Usual days. 6. Fair balance.
-7. Reception: one opener + one closer per day; 3rd only when 3 doctors + busy gap.
+1. Stay within all caps (ABSOLUTE). 2. Shape shifts: 8-9h on first 4 working days, 4-6h on the 5th, nobody over 40h. 3. Preferred/fixed assistant pairings. 4. Avoid-if-available. 5. Usual days. 6. Fair balance. 7. Reception: one opener + one closer per day; 3rd only when 3 doctors + busy gap.
 
 ========================================
 FINAL SELF-CHECK before output (silent, then output only JSON):
-Per person/day: not on a day off; daily hours <= max_daily_hours; named-day cap respected;
-reception = 8h block (opener first-patient-60min start; closer ends at close); Akash ends 15:00;
-Nav 09:30-17:30. Per week: hours <= max_weekly_hours. Per session: assistant count + skills covered.
+Per person/day: not on a day off (in can_work list); daily hours <= max_daily_hours; named-day cap respected; reception = 8h block; Akash ends 15:00; Nav 09:30-17:30; hygienists solo. Per week: hours <= max_weekly_hours; openers/closers rotated so none exceed 40h. Per session: assistant count met by real assistants only, skills covered.
 Fix any failure before outputting. Note unavoidable tradeoffs in "warnings".
 ========================================
 
@@ -84,39 +80,7 @@ OUTPUT FORMAT: return ONLY valid JSON, no prose, no markdown fences:
   "warnings": [{"severity": "critical|warning|info", "message": "..."}],
   "summary": "One short paragraph explaining the week's roster and any tradeoffs."
 }
-'serves' names the dentist an assistant supports (null otherwise). Use severity 'critical' if a hard requirement could not be met. Output COMPACT JSON on as few lines as possible (no unnecessary whitespace or indentation) to stay within the token limit."""
-
-
-DAY_NAMES_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-
-def _available_staff_per_day(ctx) -> dict:
-    """Per-date list of staff who CAN work that day, from usual days off +
-    this week's day_off exceptions. The AI must pick only from these pools."""
-    from datetime import date as _date
-    # weekly day_off exceptions -> {(name, iso_date)}
-    exc_off = set()
-    for item in ctx.weekly_availability:
-        if item.get("type") == "day_off":
-            exc_off.add((item.get("staff"), item.get("date")))
-
-    out = {}
-    ws = _date.fromisoformat(ctx.week_start)
-    we = _date.fromisoformat(ctx.week_end)
-    cur = ws
-    while cur <= we:
-        wd_name = DAY_NAMES_FULL[cur.weekday()]
-        iso = cur.isoformat()
-        can = []
-        for s in ctx.staff_briefing:
-            if wd_name in (s.get("usual_days_off") or []):
-                continue
-            if (s.get("name"), iso) in exc_off:
-                continue
-            can.append(s.get("staff_id"))
-        out[iso] = {"weekday": wd_name, "can_work": can}
-        cur = _date.fromordinal(cur.toordinal() + 1)
-    return out
+'serves' names the dentist an assistant supports (null otherwise). Use severity 'critical' if a hard requirement could not be met. Output COMPACT JSON to stay within the token limit."""
 
 
 def _build_user_message(ctx: RosterContext) -> str:
@@ -139,6 +103,36 @@ def _build_user_message(ctx: RosterContext) -> str:
     )
 
 
+DAY_NAMES_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+def _available_staff_per_day(ctx) -> dict:
+    """Per-date list of staff who CAN work that day, from usual days off +
+    this week's day_off exceptions. The AI must pick only from these pools."""
+    from datetime import date as _date
+    exc_off = set()
+    for item in ctx.weekly_availability:
+        if item.get("type") == "day_off":
+            exc_off.add((item.get("staff"), item.get("date")))
+    out = {}
+    ws = _date.fromisoformat(ctx.week_start)
+    we = _date.fromisoformat(ctx.week_end)
+    cur = ws
+    while cur <= we:
+        wd_name = DAY_NAMES_FULL[cur.weekday()]
+        iso = cur.isoformat()
+        can = []
+        for s in ctx.staff_briefing:
+            if wd_name in (s.get("usual_days_off") or []):
+                continue
+            if (s.get("name"), iso) in exc_off:
+                continue
+            can.append(s.get("staff_id"))
+        out[iso] = {"weekday": wd_name, "can_work": can}
+        cur = _date.fromordinal(cur.toordinal() + 1)
+    return out
+
+
 def _call_gemini(model, message: str) -> dict:
     try:
         response = model.generate_content(message)
@@ -151,8 +145,6 @@ def _call_gemini(model, message: str) -> dict:
             text = text[4:]
         text = text.strip()
     try:
-        # raw_decode parses the first valid JSON object and ignores any
-        # trailing junk the model may append after the closing brace.
         obj, _end = json.JSONDecoder().raw_decode(text)
         return obj
     except json.JSONDecodeError as e:

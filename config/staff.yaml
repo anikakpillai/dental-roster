@@ -31,7 +31,7 @@ staff:
   skills: [hygiene]
   hourly_cost: 0
   max_weekly_hours: 40
-  active: true
+  active: false
 
 # ── PATIENT COORDINATOR ───────────────────────────────────────────────────────
 # Fixed 9:30–17:30 every working day. Never change her hours.
@@ -96,8 +96,8 @@ staff:
 
 - staff_id: F_KALPANA
   name: Kalpana
-  role: front_desk
-  skills: [reception]
+  role: assistant
+  skills: [general]
   hourly_cost: 25
   max_weekly_hours: 20
   max_daily_hours: 8.5
@@ -114,8 +114,8 @@ staff:
 # Counted in front desk roster on all days regardless.
 - staff_id: A_DEEKSHI
   name: Deekshi
-  role: assistant
-  dual_role: front_desk
+  role: front_desk
+  dual_role: assistant
   skills: [general, reception]
   hourly_cost: 30
   max_weekly_hours: 40
@@ -126,13 +126,13 @@ staff:
 
 - staff_id: A_AKASH
   name: Akash
-  role: assistant
+  role: sterilization
   skills: [general]
   hourly_cost: 30
-  max_weekly_hours: 24
-  max_daily_hours: 7.0
+  max_weekly_hours: 999
+  max_daily_hours: 999
   arrival_buffer_min: 120
-  recurring_days_off: [3, 4, 5]
+  recurring_days_off: [6]
   active: true
 
 # Rajat: reverse 40h logic — Monday 6h hard cap, then 4x8h Tue/Thu/Fri/Sat.
@@ -181,4 +181,41 @@ staff:
   max_daily_hours: 9.0
   arrival_buffer_min: 30
   recurring_days_off: [2, 3]
+  active: true
+
+# ── ADDED: Dr Singh + 2 hygienists (set real provider_ids on server) ──
+- staff_id: D_SINGH
+  name: Dr Singh
+  role: dentist
+  provider_id: 90          # TODO: replace with Singh's real Open Dental ProvNum
+  skills: [general]
+  hourly_cost: 0
+  max_weekly_hours: 999
+  max_daily_hours: 999
+  arrival_buffer_min: 30
+  recurring_days_off: []
+  active: true
+
+- staff_id: H_ERICA
+  name: Erica Scott
+  role: hygienist
+  provider_id: 91          # TODO: replace with Erica's real ProvNum
+  skills: [hygiene]
+  hourly_cost: 0
+  max_weekly_hours: 999
+  max_daily_hours: 999
+  arrival_buffer_min: 30
+  recurring_days_off: []
+  active: true
+
+- staff_id: H_JINWEI
+  name: Jinwei
+  role: hygienist
+  provider_id: 92          # TODO: replace with Jinwei's real ProvNum
+  skills: [hygiene]
+  hourly_cost: 0
+  max_weekly_hours: 999
+  max_daily_hours: 999
+  arrival_buffer_min: 30
+  recurring_days_off: []
   active: true

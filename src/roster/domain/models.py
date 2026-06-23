@@ -11,6 +11,7 @@ class Role(str, Enum):
     ASSISTANT   = "assistant"
     FRONT_DESK  = "front_desk"
     COORDINATOR = "coordinator"
+    STERILIZATION = "sterilization"
 
 
 class DayPart(str, Enum):

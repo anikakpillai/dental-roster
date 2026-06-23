@@ -16,6 +16,7 @@ fixed_assistants:
 assistant_count_by_dentist:
   D_PILLAI: 2
   D_MARIO:  1     # bumps to 2 automatically for Surgery/Implant procedures
+  D_SINGH:  1
 
 # ── SHIFT SHAPE RULES ────────────────────────────────────────────────────────
 # Applies to all assistants unless overridden per staff member.
