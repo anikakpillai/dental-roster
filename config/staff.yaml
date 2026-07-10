@@ -123,7 +123,6 @@ staff:
   arrival_buffer_min: 30
   recurring_days_off: [2]
   active: false
-  active: true
 
 - staff_id: A_AKASH
   name: Akash

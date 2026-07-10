@@ -21,7 +21,7 @@ You receive:
 5. MANAGER NOTES - high-priority considerations for THIS week. They override normal preferences but never the ABSOLUTE CONSTRAINTS.
 6. available_staff_per_day - for each date, exactly who CAN work that day.
 
-YOUR JOB: assign staff to cover the week, producing a complete roster.
+YOUR JOB: assign staff to cover the week, producing a complete roster. CRITICAL: every shift must be justified by the DEMAND data. A dentist or hygienist appears ONLY on days where DEMAND shows they have booked appointments - NEVER invent shifts for providers with no appointments that day. If a hygienist has no appointments all week, they do not appear at all. Appointment-driven staff (Akash) likewise only appear on days the clinic has appointments.
 
 ========================================
 ABSOLUTE CONSTRAINTS - NEVER break. Re-check each before output; fix any break before responding.
@@ -37,6 +37,8 @@ G. ASSISTANT COUNT: a booked dentist must receive exactly the number of assistan
 RECEPTION OPENER/CLOSER AVAILABILITY: Openers and closers must be chosen ONLY from staff available that day. If the usual opener is off that day, use another available opener. Example: Ziya is off Mondays, so Simran opens on Monday. Every working day with patients needs BOTH an opener and a closer (unless it is a short day covered by one person). ROTATE openers and closers across the week so NO reception person exceeds their max_weekly_hours (40h = five 8-hour shifts). If one opener would reach 40h, give the 6th day's opening shift to another available opener (Ziya, Simran, or Deekshi). Same for closers.
 
 RECEPTION SHIFT MODEL (front desk) - DIFFERS from clinical staff:
+ ALL reception times are computed from the DEMAND data for that day: 'first patient' = the day's earliest appointment start in DEMAND; 'clinic close' = the day's latest appointment end in DEMAND. NEVER assume or invent opening/closing times. OPENER = (first patient - 60min) for exactly 8 hours. CLOSER = the 8 hours ending exactly at clinic close. WORKED EXAMPLE: close 17:00 -> closer works 09:00-17:00 (8h ENDING at close). A closer NEVER starts at closing time; 16:00-20:00 or 17:00-21:00 are WRONG. If the day's span (first patient - 60min through close) is 8 hours or fewer, ONE receptionist covers it: (first patient - 60min) to close.
+
 Reception do NOT work open-to-close. Each reception shift is a FIXED 8-HOUR block.
 - OPENER: starts 60 min before the first patient; works exactly 8 hours; then leaves. (first patient 11:00 -> 10:00-18:00)
 - CLOSER: ends at clinic close (last patient's finish); works the 8 hours up to that. (close 19:00 -> 11:00-19:00)
@@ -53,6 +55,8 @@ SPECIAL STAFF RULES:
 DUAL-ROLE STAFF: Some staff have a dual_role (e.g. Deekshi is front_desk with dual_role assistant). Use them in their PRIMARY role normally. Only pull a dual-role person into their secondary role (assisting) when real ASSISTANT-role staff are exhausted and a dentist would otherwise be short. Last resort, not first choice.
 
 CLINICAL STAFF (dentists, and assistants other than the special rules above):
+ PER-PROVIDER SPANS: each dentist's and hygienist's day runs from THEIR OWN first appointment to THEIR OWN last appointment (per DEMAND), NOT the clinic-wide span. If Dr Pillai's patients end 17:00, he ends 17:00 even if hygiene runs later. Assistants follow THEIR dentist's span, not the clinic's.
+
     start = first patient minus their arrival_buffer_min; end = last patient's finish.
 
 PREFERENCE RULES (apply on free choice; never break an ABSOLUTE CONSTRAINT for one):
@@ -65,6 +69,8 @@ PRIORITY ORDER when choices remain:
 1. Stay within all caps (ABSOLUTE). 2. Shape shifts: 8-9h on first 4 working days, 4-6h on the 5th, nobody over 40h. 3. Preferred/fixed assistant pairings. 4. Avoid-if-available. 5. Usual days. 6. Fair balance. 7. Reception: one opener + one closer per day; 3rd only when 3 doctors + busy gap.
 
 ========================================
+BACKFILL RULE: if your draft had someone on their day off, do not simply delete them - REPLACE them with an available person of the same role from that day's can_work list. Every working day must end up with: an opener, a closer (or one person on short days), and every working dentist's full assistant count. Check Monday especially: Ziya is off Monday, so Simran opens Monday; if Rishabh is off Monday, use Pari or another available assistant for Dr Pillai.
+
 FINAL SELF-CHECK before output (silent, then output only JSON):
 Per person/day: not on a day off (in can_work list); daily hours <= max_daily_hours; named-day cap respected; reception = 8h block; Akash ends 15:00; Nav 09:30-17:30; hygienists solo. Per week: hours <= max_weekly_hours; openers/closers rotated so none exceed 40h. Per session: assistant count met by real assistants only, skills covered.
 Fix any failure before outputting. Note unavoidable tradeoffs in "warnings".
@@ -81,7 +87,7 @@ OUTPUT FORMAT: return ONLY valid JSON, no prose, no markdown fences:
   "warnings": [{"severity": "critical|warning|info", "message": "..."}],
   "summary": "One short paragraph explaining the week's roster and any tradeoffs."
 }
-'serves' names the dentist an assistant supports (null otherwise). Use severity 'critical' if a hard requirement could not be met. Output COMPACT JSON to stay within the token limit."""
+'serves' names the dentist an assistant supports (null otherwise). 'serves' must be EXACTLY a dentist's name (e.g. "Dr Mario") or null - never notes like 'specialty: Tue/Thu'; put remarks in 'note'. Use severity 'critical' if a hard requirement could not be met. Output COMPACT JSON to stay within the token limit."""
 
 
 def _build_user_message(ctx: RosterContext) -> str:

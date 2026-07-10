@@ -102,9 +102,9 @@ def validate_roster(cfg: AppConfig, ai_result: dict) -> ValidationResult:
             days_off = getattr(staff, "recurring_days_off", None) or []
             if not is_dentist and weekday is not None and weekday in days_off:
                 res.violations.append(Violation(
-                    "warning", sid, name, day_iso, "DAY_OFF_REMOVED",
+                    "critical", sid, name, day_iso, "DAY_OFF_REMOVED",
                     f"{name} was scheduled on {DAY_NAMES[weekday]} (their day off) and was removed. "
-                    f"Verify {DAY_NAMES[weekday]} coverage."))
+                    f"Replace them with an available person of the same role so {DAY_NAMES[weekday]} stays covered."))
                 continue  # drop entry
 
             # Hour caps (skip dentists + salaried)
