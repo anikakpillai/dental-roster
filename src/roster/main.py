@@ -326,3 +326,22 @@ def update_assistant_count(body: AssistantCountInput):
     rules["assistant_count_by_dentist"] = body.assistant_count_by_dentist
     save_rules_raw(CONFIG_DIR, rules)
     return {"assistant_count_by_dentist": body.assistant_count_by_dentist}
+
+
+# ============================================================
+# Serve the frontend (server deployment)
+# Roster page at  http://localhost:8000/   (desktop shortcut target)
+# API stays at    http://localhost:8000/api/*
+# ============================================================
+from fastapi.responses import FileResponse
+
+WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+
+
+@app.get("/")
+def _serve_roster():
+    return FileResponse(str(WEB_DIR / "roster.html"))
+
+
+# Serve any other assets in web/ (js, css, images) under /web/...
+app.mount("/web", StaticFiles(directory=str(WEB_DIR)), name="web")

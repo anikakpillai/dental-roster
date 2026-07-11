@@ -194,7 +194,8 @@
   </div>
 
 <script>
-  const API = 'http://127.0.0.1:8000';
+  // Port-aware: served from :8000 (server) -> same-origin; from :5500 (Mac dev) -> API on :8000
+  const API = (location.port === '8000' || location.port === '') ? '' : 'http://127.0.0.1:8000';
   const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const ROLE_ORDER = [['dentist','Dentists'],['hygienist','Hygienists'],['assistant','Assistants'],['sterilization','Sterilization'],['front_desk','Front desk'],['coordinator','Coordinator']];
   let STATE = null;
