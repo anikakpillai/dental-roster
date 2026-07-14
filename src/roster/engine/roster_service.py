@@ -174,7 +174,7 @@ def build_ai_roster(
       {"roster": [...], "warnings": [...], "summary": "..."}
     """
     from roster.engine.availability import build_sessions, WeeklyInput as _WI
-    from roster.engine.demand import build_demand
+    from roster.engine.demand import build_demand, dentist_day_truth
     from roster.engine.ai_context import assemble_context
     from roster.engine.ai_roster import generate_ai_roster
 
@@ -183,6 +183,9 @@ def build_ai_roster(
     sessions = build_sessions(cfg, week_start, week_end)
     appointments = get_week_appointments(week_start, week_end)
     demand = build_demand(cfg, sessions, appointments)
+    truth = dentist_day_truth(cfg, appointments)
     ctx = assemble_context(cfg, week_start, week_end, demand, weekly,
-                           manager_notes=manager_notes)
-    return generate_ai_roster(ctx, cfg=cfg, weekly=weekly)
+                           manager_notes=manager_notes, dentist_truth=truth)
+    return generate_ai_roster(ctx, cfg=cfg, weekly=weekly, dentist_truth=truth)
+
+

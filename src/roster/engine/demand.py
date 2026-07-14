@@ -100,3 +100,37 @@ def build_demand(
         # Hygienists are hidden from the roster: no dentist demand, no assistant demand.
 
     return demand
+
+
+
+
+def dentist_day_truth(cfg: AppConfig, appointments: list[AppointmentMeta]) -> dict:
+    """Ground truth from Open Dental: which dentists work each day and their real spans.
+    {day_iso: {provider_id: {"staff_id","name","start","end"}}}.
+    Applies the same coverage remap + hygienist filter as build_demand."""
+    coverage      = cfg.covered_provider_map()
+    hygienist_ids = set(cfg.rules.hygienist_provider_ids or [])
+    dentists      = cfg.dentist_by_provider_id()
+    truth: dict = {}
+    for appt in appointments:
+        prov = appt.provider_id
+        if prov is None:
+            continue
+        if prov in coverage:
+            prov = coverage[prov]
+        if prov in hygienist_ids:
+            continue
+        d = dentists.get(prov)
+        if d is None or not appt.day_iso or not appt.start_hm:
+            continue
+        day = truth.setdefault(appt.day_iso, {})
+        cur = day.get(prov)
+        if cur is None:
+            day[prov] = {"staff_id": d.staff_id, "name": d.name,
+                         "start": appt.start_hm, "end": appt.end_hm}
+        else:
+            if appt.start_hm < cur["start"]:
+                cur["start"] = appt.start_hm
+            if appt.end_hm > cur["end"]:
+                cur["end"] = appt.end_hm
+    return truth

@@ -72,6 +72,8 @@ def get_week_appointments(week_start: date, week_end: date) -> list[AppointmentM
         timing = parse_pattern(r["Pattern"])
         prov = r["ProvNum"] if r["ProvNum"] and r["ProvNum"] != 0 else None
         hyg = r["ProvHyg"] if r["ProvHyg"] and r["ProvHyg"] != 0 else None
+        from datetime import timedelta as _td
+        end_dt = dt + _td(minutes=timing.total_min or 0)
         appointments.append(
             AppointmentMeta(
                 apt_id=r["AptNum"],
@@ -82,6 +84,11 @@ def get_week_appointments(week_start: date, week_end: date) -> list[AppointmentM
                 duration_min=timing.total_min,
                 assistant_min=timing.assistant_min,
                 procedure_category=r["ProcDescript"],
+                day_iso=dt.date().isoformat(),
+                start_hm=dt.strftime("%H:%M"),
+                end_hm=end_dt.strftime("%H:%M"),
             )
         )
     return appointments
+
+

@@ -68,6 +68,9 @@ class AppointmentMeta:
     duration_min:       int
     assistant_min:      int
     procedure_category: Optional[str]
+    day_iso:            str = ""      # appointment date (YYYY-MM-DD)
+    start_hm:           str = ""      # appointment start (HH:MM)
+    end_hm:             str = ""      # appointment end   (HH:MM)
 
 
 @dataclass
@@ -95,3 +98,5 @@ class Warning:
 class PatternTiming:
     total_min:     int
     assistant_min: int
+
+

@@ -36,6 +36,7 @@ class RosterContext:
     standing_rules:    dict           # clinic-wide policies
     weekly_availability: list         # who is off / limited this week
     manager_notes:     str            # free-text weekly considerations
+    dentist_days:      dict = None    # FACTS: {date: [{dentist, start, end}]} from Open Dental
 
 
 def _provider_name(cfg: AppConfig, prov_id: int) -> str:
@@ -194,8 +195,17 @@ def assemble_context(
     demand: dict,
     weekly: WeeklyInput,
     manager_notes: str = "",
+    dentist_truth: dict | None = None,
 ) -> RosterContext:
     """Build the full briefing for the AI."""
+    dentist_days = None
+    if dentist_truth:
+        dentist_days = {
+            day: [{"dentist": v["name"], "staff_id": v["staff_id"],
+                   "start": v["start"], "end": v["end"]}
+                  for _, v in sorted(info.items())]
+            for day, info in sorted(dentist_truth.items())
+        }
     return RosterContext(
         week_start=week_start.isoformat(),
         week_end=week_end.isoformat(),
@@ -205,4 +215,6 @@ def assemble_context(
         standing_rules=build_standing_rules(cfg),
         weekly_availability=build_weekly_availability(cfg, week_start, week_end, weekly),
         manager_notes=manager_notes.strip(),
+        dentist_days=dentist_days,
     )
+

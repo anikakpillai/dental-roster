@@ -63,7 +63,7 @@ def _trim_end(start: str, cap_hours: float) -> str:
         return start
 
 
-def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None) -> ValidationResult:
+def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None, dentist_truth=None) -> ValidationResult:
     staff_by_id = cfg.staff_by_id()
     res = ValidationResult(corrected_roster=ai_result, needs_retry=False)
     weekly_hours = {}
@@ -97,6 +97,29 @@ def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None) -> ValidationR
             role_val = getattr(role, "value", str(role))
             is_dentist = role_val == "dentist"
             exempt_hours = is_dentist or sid in SALARIED_EXEMPT
+
+            # DENTIST FACTS (Open Dental is truth): presence + span must match the book.
+            if is_dentist and dentist_truth is not None and day_iso:
+                day_truth = dentist_truth.get(day_iso, {})
+                fact = None
+                for _prov, info in day_truth.items():
+                    if info.get("staff_id") == sid:
+                        fact = info
+                        break
+                if fact is None:
+                    res.violations.append(Violation(
+                        "critical", sid, name, day_iso, "DENTIST_NOT_BOOKED",
+                        f"{name} has NO booked appointments on {DAY_NAMES[weekday] if weekday is not None else day_iso} "
+                        f"per Open Dental and was removed. Remove or reassign any assistants serving them that day."))
+                    continue  # drop entry
+                if start != fact["start"] or end != fact["end"]:
+                    res.violations.append(Violation(
+                        "warning", sid, name, day_iso, "DENTIST_SPAN_CORRECTED",
+                        f"{name}'s hours corrected to their booked span {fact['start']}-{fact['end']} "
+                        f"(was {start}-{end})."))
+                    entry["start"], entry["end"] = fact["start"], fact["end"]
+                    start, end = fact["start"], fact["end"]
+                    hours = _parse_hours(start, end)
 
             # Fixed shift auto-correct (Nav)
             shift_start = getattr(staff, "shift_start", None)
@@ -189,6 +212,21 @@ def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None) -> ValidationR
             weekly_hours[sid] = weekly_hours.get(sid, 0.0) + hours
             kept.append(entry)
 
+        # Insert any dentist Open Dental says works today but the draft omitted.
+        if dentist_truth is not None and day_iso:
+            present = {e.get("staff_id") for e in kept}
+            for _prov, info in sorted((dentist_truth.get(day_iso) or {}).items()):
+                if info["staff_id"] not in present:
+                    kept.insert(0, {
+                        "staff_id": info["staff_id"], "name": info["name"],
+                        "role": "dentist", "start": info["start"], "end": info["end"],
+                        "serves": None, "note": "booked in Open Dental",
+                    })
+                    res.violations.append(Violation(
+                        "critical", info["staff_id"], info["name"], day_iso, "DENTIST_MISSING",
+                        f"{info['name']} has booked appointments {info['start']}-{info['end']} on this day "
+                        f"but was missing from the draft; added. Assign their required assistants for this day."))
+
         day["staff"] = kept
 
     # WEEKLY CAP (skip dentists + salaried) -> flag for retry
@@ -222,3 +260,5 @@ def build_retry_feedback(res: ValidationResult) -> str:
     lines.append("\nReassign to other available staff. Do not introduce new violations. "
                  "Return the full corrected roster JSON.")
     return "\n".join(lines)
+
+

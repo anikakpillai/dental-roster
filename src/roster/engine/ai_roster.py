@@ -28,6 +28,7 @@ YOUR JOB: assign staff to cover the week, producing a complete roster. CRITICAL:
 ABSOLUTE CONSTRAINTS - NEVER break. Re-check each before output; fix any break before responding.
 ========================================
 A0. SHIFT ARITHMETIC: before writing any shift, compute (end - start) in hours and confirm it matches the intended length and does not exceed that person's max_daily_hours. A morning session is ~5h, an afternoon ~4h, a full clinical day ~8-9h - never more. Never output a shift you have not arithmetic-checked, a start earlier than (first patient - arrival_buffer_min), or an end later than the last patient's finish.
+A1. DENTIST FACTS: dentist_days_FACTS lists, for each date, exactly which dentists work and their true span (first to last booked patient). Copy these EXACTLY: schedule each listed dentist on that date with that start and end; never add a dentist to a day they are not listed, never omit a listed dentist, never change their times. Assistants serve within their dentist's listed span.
 A. WEEKLY HOURS: no one exceeds their max_weekly_hours.
 B. DAILY HOURS: no one exceeds their max_daily_hours on any day.
 C. PER-DAY CAPS: if a person has e.g. monday_cap_hours, their hours that named day must not exceed it.
@@ -103,6 +104,8 @@ def _build_user_message(ctx: RosterContext) -> str:
         "available_staff_per_day": _available_staff_per_day(ctx),
         "manager_notes": ctx.manager_notes or "(none this week)",
     }
+    if getattr(ctx, "dentist_days", None):
+        payload["dentist_days_FACTS"] = ctx.dentist_days
     return (
         "Build the roster for this week using the data below. "
         "Obey every ABSOLUTE CONSTRAINT and the RECEPTION SHIFT MODEL, and run the "
@@ -174,8 +177,9 @@ def _call_gemini(client, message: str) -> dict:
                     "Please click Build again in a few seconds.")
             raise RuntimeError(f"Gemini API call failed: {e}")
     text = (response.text or "").strip()
-    if text.startswith("```"):
-        text = text.split("```", 2)[1]
+    _fence = chr(96) * 3  # markdown code fence (kept out of the literal for paste-safety)
+    if text.startswith(_fence):
+        text = text.split(_fence, 2)[1]
         if text.startswith("json"):
             text = text[4:]
         text = text.strip()
@@ -198,7 +202,7 @@ def _call_gemini_json(client, message: str, tries: int = 2) -> dict:
     raise RuntimeError("Gemini returned invalid JSON after retries: " + str(last))
 
 
-def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: int = 2) -> dict:
+def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, dentist_truth=None, max_retries: int = 2) -> dict:
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set.")
@@ -213,14 +217,14 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: i
 
     from roster.engine.validator import validate_roster, build_retry_feedback
 
-    res = validate_roster(cfg, result, weekly=weekly)
+    res = validate_roster(cfg, result, weekly=weekly, dentist_truth=dentist_truth)
     attempt = 0
     while res.needs_retry and attempt < max_retries:
         attempt += 1
         feedback = build_retry_feedback(res)
         retry_message = base_message + "\n\n" + feedback
         result = _call_gemini_json(client, retry_message)
-        res = validate_roster(cfg, result, weekly=weekly)
+        res = validate_roster(cfg, result, weekly=weekly, dentist_truth=dentist_truth)
 
     result = res.corrected_roster
     result.setdefault("warnings", [])
@@ -236,3 +240,5 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: i
                         + str(max_retries) + " retry attempt(s). Review the critical warnings below."),
         })
     return result
+
+
