@@ -73,7 +73,6 @@ def build_demand_summary(cfg: AppConfig, demand: dict) -> list:
             "appointment_count": d.appointment_count,
             "assistant_minutes": d.assistant_minutes,
             "dentists_working": dentists,
-            "hygienists_working": sorted(d.hygienist_provider_ids),
         })
     return summary
 

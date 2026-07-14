@@ -45,18 +45,32 @@ def build_demand(
     proc_skill_map = cfg.rules.procedure_skill_map
     asst_req       = cfg.rules.assistant_requirements
 
+    # Truth-layer normalisation applied BEFORE any counting:
+    #   coverage      : fold a covered book into the covering dentist  (e.g. 28 -> 32)
+    #   hygienist_ids : ProvNums that belong to hygienists booked in the dentist slot;
+    #                   they are solo staff, never dentists, never generate assistant demand.
+    coverage      = cfg.covered_provider_map()
+    hygienist_ids = set(cfg.rules.hygienist_provider_ids or [])
+
     for appt in appointments:
         key = appt.session_key
         if key not in demand:
             continue
         d = demand[key]
+
+        prov = appt.provider_id
+        if prov is not None and prov in coverage:
+            prov = coverage[prov]            # remap covered book to covering dentist
+
+        is_hygienist = prov is not None and prov in hygienist_ids
+
+        # Any real appointment means the clinic is open this session.
         d.appointment_count += 1
-        d.assistant_minutes += appt.assistant_min
         if appt.operatory:
             d.operatories_in_use.add(appt.operatory)
 
-        if appt.provider_id is not None:
-            prov = appt.provider_id
+        if prov is not None and not is_hygienist:
+            d.assistant_minutes += appt.assistant_min
             d.active_dentist_provider_ids.add(prov)
 
             required_skills = set()
@@ -83,7 +97,6 @@ def build_demand(
             if extra_skill:
                 d.extra_needs_skill_by_provider[prov] = True
 
-        if appt.hygienist_id is not None:
-            d.hygienist_provider_ids.add(appt.hygienist_id)
+        # Hygienists are hidden from the roster: no dentist demand, no assistant demand.
 
     return demand

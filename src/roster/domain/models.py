@@ -45,6 +45,7 @@ class StaffMember:
     shift_start:        Optional[str] = None
     shift_end:          Optional[str] = None
     monday_cap_hours:   Optional[float] = None
+    covers_provider_ids: list         = field(default_factory=list)
 
 
 @dataclass

@@ -26,12 +26,12 @@ def _hours_from_session(s: dict) -> float:
 
 
 def load_config_dir(config_dir: Path) -> AppConfig:
-    staff_raw  = yaml.safe_load((config_dir / "staff.yaml").read_text())
-    rules_raw  = yaml.safe_load((config_dir / "rules.yaml").read_text())
+    staff_raw  = yaml.safe_load((config_dir / "staff.yaml").read_text(encoding="utf-8-sig"))
+    rules_raw  = yaml.safe_load((config_dir / "rules.yaml").read_text(encoding="utf-8-sig"))
     clinic_raw = {}
     clinic_path = config_dir / "clinic.yaml"
     if clinic_path.exists():
-        clinic_raw = yaml.safe_load(clinic_path.read_text()) or {}
+        clinic_raw = yaml.safe_load(clinic_path.read_text(encoding="utf-8-sig")) or {}
 
     staff = [build_staff_member(s) for s in staff_raw.get("staff", [])]
 
@@ -72,6 +72,7 @@ def load_config_dir(config_dir: Path) -> AppConfig:
         front_desk=front_desk,
         rajat_monday_rule=rajat_rule,
         scoring_weights=rules_raw.get("scoring_weights", {}),
+        hygienist_provider_ids=rules_raw.get("hygienist_provider_ids", []),
     )
 
     raw_sessions = clinic_raw.get("sessions", [

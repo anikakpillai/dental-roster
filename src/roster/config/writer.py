@@ -11,13 +11,14 @@ import yaml
 
 
 def _load(path: Path) -> dict:
-    return yaml.safe_load(path.read_text()) or {}
+    return yaml.safe_load(path.read_text(encoding="utf-8-sig")) or {}
 
 
 def _write(path: Path, data: dict):
     path.write_text(
         yaml.dump(data, default_flow_style=False,
-                  allow_unicode=True, sort_keys=False)
+                  allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
     )
 
 

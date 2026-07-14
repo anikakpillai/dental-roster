@@ -73,6 +73,7 @@ class RulesConfig:
     front_desk:                 FrontDeskRules
     rajat_monday_rule:          Optional[RajatMondayRule]
     scoring_weights:            dict
+    hygienist_provider_ids:     list = field(default_factory=list)
 
 
 @dataclass
@@ -98,6 +99,17 @@ class AppConfig:
             s.provider_id: s for s in self.staff
             if s.role == Role.HYGIENIST and s.provider_id is not None and s.active
         }
+
+    def covered_provider_map(self) -> dict:
+        """Map each covered ProvNum -> the canonical dentist's provider_id.
+        e.g. Dr Singh (32) covers Dr Kaur (28) while Kaur is on leave -> {28: 32}."""
+        m = {}
+        for s in self.staff:
+            if not s.active or s.provider_id is None:
+                continue
+            for covered in (getattr(s, "covers_provider_ids", []) or []):
+                m[int(covered)] = s.provider_id
+        return m
 
     def front_desk_pool(self) -> list:
         """Front desk staff + dual-role assistants."""
@@ -134,4 +146,5 @@ def build_staff_member(raw: dict) -> StaffMember:
         shift_start=raw.get("shift_start"),
         shift_end=raw.get("shift_end"),
         monday_cap_hours=raw.get("monday_cap_hours"),
+        covers_provider_ids=raw.get("covers_provider_ids", []),
     )

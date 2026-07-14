@@ -149,19 +149,7 @@ def assign(
                     ))
                     _commit(dentist.staff_id, day_str, session_hours)
 
-                for prov_id in d.hygienist_provider_ids:
-                    hyg = hyg_by_prov.get(prov_id)
-                    if not hyg:
-                        continue
-                    if any(a.session_key == key and a.staff_id == hyg.staff_id
-                           for a in result.assignments):
-                        continue
-                    result.assignments.append(Assignment(
-                        session_key=key, staff_id=hyg.staff_id, staff_name=hyg.name,
-                        role=Role.HYGIENIST, hours=session_hours,
-                        reasons=["booked in Open Dental"],
-                    ))
-                    _commit(hyg.staff_id, day_str, session_hours)
+                # Hygienists are not rostered (hidden from the grid).
 
             # ── Assistants ────────────────────────────────────────────────
             if d and d.appointment_count > 0:
