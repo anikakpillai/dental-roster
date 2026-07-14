@@ -8,7 +8,7 @@ from google.genai import types
 
 from roster.engine.ai_context import RosterContext
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-2.5-flash-lite"
 MAX_TOKENS = 8000
 
 SYSTEM_PROMPT = """You are an expert dental practice scheduler building a weekly staff roster for a dental clinic.
