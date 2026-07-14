@@ -149,6 +149,21 @@
     .matrix-wrap{box-shadow:none;border:none}
     td.cell{cursor:default}
   }
+
+  /* Weekly exceptions panel */
+  .ex-wrap{margin-top:2px}
+  .ex-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+  .ex-row .ex-f{display:flex;flex-direction:column;gap:3px}
+  .ex-row select,.ex-row input{padding:7px 9px;border:1px solid var(--line,#d9d9de);border-radius:8px;font:inherit;background:#fff}
+  .ex-row label{font-size:11px;color:var(--ink-faint,#8a8a90)}
+  .ex-add{padding:8px 14px;border:1px solid var(--line,#d9d9de);border-radius:8px;background:#f4f4f6;cursor:pointer;font:inherit}
+  .ex-add:hover{background:#ececf0}
+  #ex-time.hidden{display:none}
+  .ex-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .ex-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--r-hyg,#eef1f6);font-size:12px;border:1px solid var(--line,#e2e2e8)}
+  .ex-chip .x{cursor:pointer;font-weight:700;color:var(--ink-faint,#8a8a90);border:0;background:none;font-size:14px;line-height:1;padding:0}
+  .ex-chip .x:hover{color:#c0392b}
+  .ex-chip .conflict{color:#b26a00}
 </style>
 </head>
 <body>
@@ -170,11 +185,28 @@
       <div class="controls-grid">
         <div class="field">
           <label for="wk">Week starting</label>
-          <input type="date" id="wk">
+          <input type="date" id="wk" onchange="weekChanged()">
         </div>
         <div class="field">
           <label for="notes">Notes for this week <span class="hint">— optional, the scheduler will factor these in</span></label>
           <textarea id="notes" placeholder="e.g. Busy Thursday expected — keep Pari mornings only"></textarea>
+        </div>
+        <div class="field ex-wrap" style="grid-column:1/-1">
+          <label>Exceptions this week <span class="hint">— one-off changes; facts are enforced, dentists follow Open Dental</span></label>
+          <div class="ex-row">
+            <div class="ex-f"><label for="ex-person">Person</label><select id="ex-person"></select></div>
+            <div class="ex-f"><label for="ex-type">What</label>
+              <select id="ex-type" onchange="exTypeChange()">
+                <option value="day_off">Off all day</option>
+                <option value="late_start">Starts late</option>
+                <option value="early_finish">Leaves early</option>
+              </select></div>
+            <div class="ex-f"><label for="ex-day">Day</label><select id="ex-day"></select></div>
+            <div class="ex-f" id="ex-time-wrap" style="display:none"><label for="ex-time">Time</label><input type="time" id="ex-time"></div>
+            <div class="ex-f" style="flex:1;min-width:160px"><label for="ex-note">Note (optional)</label><input type="text" id="ex-note" placeholder="e.g. family event"></div>
+            <button type="button" class="ex-add" onclick="addException()">Add</button>
+          </div>
+          <div class="ex-chips" id="ex-chips"></div>
         </div>
         <div class="field">
           <button class="btn" id="go" onclick="generate()">
@@ -207,6 +239,58 @@
   function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
   document.getElementById('wk').value = iso(mondayOf(new Date()));
+  let EXC = [];
+  let STAFF = [];
+  const DOW_FULL = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  async function loadStaff(){
+    try{ const r=await fetch(`${API}/api/staff`); const j=await r.json();
+      STAFF=(j.staff||[]).filter(s=>s.active!==false);
+      const sel=document.getElementById('ex-person');
+      sel.innerHTML=STAFF.map(s=>`<option value="${esc(s.staff_id)}">${esc(s.name)}</option>`).join('');
+    }catch(e){/* staff list optional */}
+  }
+  function staffName(id){const s=STAFF.find(x=>x.staff_id===id);return s?s.name:id;}
+  function weekDates(){const m=mondayOf(new Date(document.getElementById('wk').value+'T00:00:00'));
+    return DOW_FULL.map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return d;});}
+  function refreshDays(){const sel=document.getElementById('ex-day');
+    sel.innerHTML=weekDates().map((d,i)=>`<option value="${iso(d)}">${DOW_FULL[i]} ${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</option>`).join('');}
+  function exTypeChange(){document.getElementById('ex-time-wrap').style.display =
+    document.getElementById('ex-type').value==='day_off'?'none':'flex';}
+  function chipLabel(e){const t=e.type==='day_off'?'off':(e.type==='late_start'?`from ${fmtTime(e.time)}`:`until ${fmtTime(e.time)}`);
+    const dt=new Date(e.date+'T00:00:00'); const day=DOW_FULL[(dt.getDay()+6)%7];
+    return `${staffName(e.staff_id)} — ${day} ${t}`+(e.note?` · ${e.note}`:'');}
+  function renderChips(){document.getElementById('ex-chips').innerHTML =
+    EXC.map((e,i)=>`<span class="ex-chip">${esc(chipLabel(e))}<button class="x" onclick="removeException(${i})">×</button></span>`).join('');}
+  function addException(){
+    const staff_id=document.getElementById('ex-person').value;
+    const type=document.getElementById('ex-type').value;
+    const date=document.getElementById('ex-day').value;
+    const time=document.getElementById('ex-time').value;
+    const note=document.getElementById('ex-note').value.trim();
+    if(!staff_id||!date){return;}
+    if(type!=='day_off'&&!time){alert('Pick a time for a late start / early finish.');return;}
+    EXC.push({staff_id,type,date,time:type==='day_off'?null:time,note});
+    document.getElementById('ex-note').value='';
+    renderChips(); saveExceptions();
+  }
+  function removeException(i){EXC.splice(i,1);renderChips();saveExceptions();}
+  const curMonday=()=>iso(mondayOf(new Date(document.getElementById('wk').value+'T00:00:00')));
+  async function loadExceptions(){
+    try{const r=await fetch(`${API}/api/exceptions/${curMonday()}`);const j=await r.json();
+      EXC=(j.exceptions||[]).map(e=>({staff_id:e.staff_id,type:e.type,date:e.date,time:e.time,note:e.note||''}));
+      renderChips();}catch(e){EXC=[];renderChips();}
+  }
+  async function saveExceptions(){
+    try{await fetch(`${API}/api/exceptions/${curMonday()}`,{method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({exceptions:EXC.map(e=>({staff_id:e.staff_id,type:e.type,date:e.date,time:e.time,note:e.note||''}))})});
+    }catch(e){/* non-fatal */}
+  }
+  function weekChanged(){const v=document.getElementById('wk').value;if(!v)return;
+    document.getElementById('wk').value=iso(mondayOf(new Date(v+'T00:00:00')));
+    refreshDays(); loadExceptions();}
+  loadStaff(); refreshDays(); loadExceptions();
 
   async function generate(){
     const wkStart = document.getElementById('wk').value;
@@ -223,7 +307,12 @@
     try{
       const r = await fetch(`${API}/api/ai-roster?week_start=${iso(start)}&week_end=${iso(end)}`,{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({manager_notes:notes})
+        body: JSON.stringify({manager_notes:notes, exceptions:{
+          days_off:      EXC.filter(e=>e.type==='day_off').map(e=>({staff_id:e.staff_id,date:e.date,note:e.note||''})),
+          late_starts:   EXC.filter(e=>e.type==='late_start').map(e=>({staff_id:e.staff_id,date:e.date,start_time:e.time,note:e.note||''})),
+          early_finishes:EXC.filter(e=>e.type==='early_finish').map(e=>({staff_id:e.staff_id,date:e.date,end_time:e.time,note:e.note||''})),
+          notes:[]
+        }})
       });
       if(!r.ok){throw new Error((await r.json()).detail || `Request failed (${r.status})`);}
       const data = await r.json();

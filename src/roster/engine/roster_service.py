@@ -185,4 +185,4 @@ def build_ai_roster(
     demand = build_demand(cfg, sessions, appointments)
     ctx = assemble_context(cfg, week_start, week_end, demand, weekly,
                            manager_notes=manager_notes)
-    return generate_ai_roster(ctx, cfg=cfg)
+    return generate_ai_roster(ctx, cfg=cfg, weekly=weekly)

@@ -164,6 +164,7 @@ def build_weekly_availability(cfg: AppConfig, week_start: date, week_end: date,
             "staff": staff.name if staff else sid,
             "date": d.isoformat(),
             "type": "day_off",
+            "note": weekly.note_for(sid, d, "day_off"),
         })
     for sid, d, t in weekly.late_starts:
         staff = cfg.staff_by_id().get(sid)
@@ -172,6 +173,7 @@ def build_weekly_availability(cfg: AppConfig, week_start: date, week_end: date,
             "date": d.isoformat(),
             "type": "late_start",
             "from": t.strftime("%H:%M"),
+            "note": weekly.note_for(sid, d, "late_start"),
         })
     for sid, d, t in weekly.early_finishes:
         staff = cfg.staff_by_id().get(sid)
@@ -180,6 +182,7 @@ def build_weekly_availability(cfg: AppConfig, week_start: date, week_end: date,
             "date": d.isoformat(),
             "type": "early_finish",
             "until": t.strftime("%H:%M"),
+            "note": weekly.note_for(sid, d, "early_finish"),
         })
     return items
 

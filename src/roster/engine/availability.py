@@ -32,6 +32,10 @@ class WeeklyInput:
     late_starts:    list = field(default_factory=list)   # [(staff_id, date, time)]
     early_finishes: list = field(default_factory=list)   # [(staff_id, date, time)]
     notes:          list = field(default_factory=list)
+    exception_notes: dict = field(default_factory=dict)  # {(staff_id, iso_date, kind): note}
+
+    def note_for(self, staff_id: str, d, kind: str) -> str:
+        return self.exception_notes.get((staff_id, d.isoformat(), kind), "")
 
     def is_off(self, staff_id: str, d: date) -> bool:
         return any(sid == staff_id and dt == d for sid, dt in self.days_off)

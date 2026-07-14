@@ -33,6 +33,15 @@ class ValidationResult:
         return [v for v in self.violations if v.severity == "critical"]
 
 
+def _hm(s: str) -> int:
+    """Time string 'HH:MM' -> minutes since midnight (for comparisons)."""
+    try:
+        hh, mm = [int(x) for x in str(s).split(":")]
+        return hh * 60 + mm
+    except Exception:
+        return 0
+
+
 def _parse_hours(start: str, end: str) -> float:
     try:
         sh, sm = [int(x) for x in str(start).split(":")]
@@ -54,7 +63,7 @@ def _trim_end(start: str, cap_hours: float) -> str:
         return start
 
 
-def validate_roster(cfg: AppConfig, ai_result: dict) -> ValidationResult:
+def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None) -> ValidationResult:
     staff_by_id = cfg.staff_by_id()
     res = ValidationResult(corrected_roster=ai_result, needs_retry=False)
     weekly_hours = {}
@@ -62,8 +71,10 @@ def validate_roster(cfg: AppConfig, ai_result: dict) -> ValidationResult:
     for day in ai_result.get("roster", []):
         day_iso = day.get("date", "")
         try:
-            weekday = date.fromisoformat(day_iso).weekday()
+            day_date = date.fromisoformat(day_iso)
+            weekday = day_date.weekday()
         except Exception:
+            day_date = None
             weekday = None
 
         kept = []
@@ -106,6 +117,49 @@ def validate_roster(cfg: AppConfig, ai_result: dict) -> ValidationResult:
                     f"{name} was scheduled on {DAY_NAMES[weekday]} (their day off) and was removed. "
                     f"Replace them with an available person of the same role so {DAY_NAMES[weekday]} stays covered."))
                 continue  # drop entry
+
+            # WEEKLY EXCEPTIONS (manager overrides for THIS week).
+            #   Support staff: exception is authoritative (they are NOT in Open Dental).
+            #   Dentists: Open Dental wins (their booked patients are truth) -> keep + flag.
+            if weekly is not None and day_date is not None:
+                if weekly.is_off(sid, day_date):
+                    if is_dentist:
+                        res.violations.append(Violation(
+                            "warning", sid, name, day_iso, "EXCEPTION_CONFLICT",
+                            f"You marked {name} OFF on {DAY_NAMES[weekday]}, but Open Dental shows "
+                            f"them with booked appointments. Kept per Open Dental — resolve in OD if they are truly off."))
+                    else:
+                        res.violations.append(Violation(
+                            "critical", sid, name, day_iso, "EXCEPTION_DAY_OFF_REMOVED",
+                            f"{name} was marked OFF this {DAY_NAMES[weekday]} (weekly exception) and was removed. "
+                            f"Replace with an available person of the same role so {DAY_NAMES[weekday]} stays covered."))
+                        continue  # drop entry
+
+                # Late start: don't begin before the exception time (support staff only).
+                lt = weekly.late_start(sid, day_date)
+                if lt is not None and not is_dentist:
+                    lt_s = lt.strftime("%H:%M")
+                    if _hm(start) < _hm(lt_s):
+                        res.violations.append(Violation(
+                            "warning", sid, name, day_iso, "EXCEPTION_LATE_START",
+                            f"{name} starts no earlier than {lt_s} this {DAY_NAMES[weekday]} (weekly exception); "
+                            f"was {start}. Adjusted to {lt_s}-{end}."))
+                        entry["start"] = lt_s
+                        start = lt_s
+                        hours = _parse_hours(start, end)
+
+                # Early finish: don't run past the exception time (support staff only).
+                ef = weekly.early_finish(sid, day_date)
+                if ef is not None and not is_dentist:
+                    ef_s = ef.strftime("%H:%M")
+                    if _hm(end) > _hm(ef_s):
+                        res.violations.append(Violation(
+                            "warning", sid, name, day_iso, "EXCEPTION_EARLY_FINISH",
+                            f"{name} finishes by {ef_s} this {DAY_NAMES[weekday]} (weekly exception); "
+                            f"was {end}. Adjusted to {start}-{ef_s}."))
+                        entry["end"] = ef_s
+                        end = ef_s
+                        hours = _parse_hours(start, end)
 
             # Hour caps (skip dentists + salaried)
             if not exempt_hours:

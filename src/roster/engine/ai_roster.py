@@ -8,7 +8,7 @@ from google.genai import types
 
 from roster.engine.ai_context import RosterContext
 
-MODEL = "gemini-2.5-flash-lite"
+MODEL = "gemini-2.5-flash"
 MAX_TOKENS = 8000
 
 SYSTEM_PROMPT = """You are an expert dental practice scheduler building a weekly staff roster for a dental clinic.
@@ -165,7 +165,7 @@ def _call_gemini(client, message: str) -> dict:
         raise RuntimeError("Gemini returned invalid JSON: " + str(e) + " | first 500 chars: " + text[:500])
 
 
-def generate_ai_roster(ctx: RosterContext, cfg=None, max_retries: int = 2) -> dict:
+def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: int = 2) -> dict:
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY environment variable is not set.")
@@ -180,14 +180,14 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, max_retries: int = 2) -> di
 
     from roster.engine.validator import validate_roster, build_retry_feedback
 
-    res = validate_roster(cfg, result)
+    res = validate_roster(cfg, result, weekly=weekly)
     attempt = 0
     while res.needs_retry and attempt < max_retries:
         attempt += 1
         feedback = build_retry_feedback(res)
         retry_message = base_message + "\n\n" + feedback
         result = _call_gemini(client, retry_message)
-        res = validate_roster(cfg, result)
+        res = validate_roster(cfg, result, weekly=weekly)
 
     result = res.corrected_roster
     result.setdefault("warnings", [])
