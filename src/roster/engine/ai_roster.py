@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import os
+import time
 
 from google import genai
 from google.genai import types
@@ -9,7 +10,7 @@ from google.genai import types
 from roster.engine.ai_context import RosterContext
 
 MODEL = "gemini-2.5-flash"
-MAX_TOKENS = 8000
+MAX_TOKENS = 16000
 
 SYSTEM_PROMPT = """You are an expert dental practice scheduler building a weekly staff roster for a dental clinic.
 
@@ -138,31 +139,63 @@ def _available_staff_per_day(ctx) -> dict:
     return out
 
 
+# Google-side transient errors worth waiting out (overload / rate limit / 5xx).
+_TRANSIENT = ("503", "UNAVAILABLE", "overload", "high demand", "429",
+              "RESOURCE_EXHAUSTED", "500", "INTERNAL", "deadline", "timeout")
+
+def _is_transient(err: str) -> bool:
+    e = err.lower()
+    return any(t.lower() in e for t in _TRANSIENT)
+
 def _call_gemini(client, message: str) -> dict:
-    try:
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=message,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                max_output_tokens=MAX_TOKENS,
-                temperature=0.2,
-                response_mime_type="application/json",
-            ),
-        )
-    except Exception as e:
-        raise RuntimeError(f"Gemini API call failed: {e}")
+    response = None
+    delays = [2, 5, 10]  # backoff seconds between attempts on transient errors
+    for attempt in range(len(delays) + 1):
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=message,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    max_output_tokens=MAX_TOKENS,
+                    temperature=0.2,
+                    response_mime_type="application/json",
+                ),
+            )
+            break
+        except Exception as e:
+            msg = str(e)
+            if _is_transient(msg) and attempt < len(delays):
+                time.sleep(delays[attempt])
+                continue
+            if _is_transient(msg):
+                raise RuntimeError(
+                    "Gemini is temporarily busy (Google-side overload). "
+                    "Please click Build again in a few seconds.")
+            raise RuntimeError(f"Gemini API call failed: {e}")
     text = (response.text or "").strip()
     if text.startswith("```"):
         text = text.split("```", 2)[1]
         if text.startswith("json"):
             text = text[4:]
         text = text.strip()
-    try:
-        obj, _end = json.JSONDecoder().raw_decode(text)
-        return obj
-    except json.JSONDecodeError as e:
-        raise RuntimeError("Gemini returned invalid JSON: " + str(e) + " | first 500 chars: " + text[:500])
+    obj, _end = json.JSONDecoder().raw_decode(text)  # raises JSONDecodeError on malformed output
+    return obj
+
+
+def _call_gemini_json(client, message: str, tries: int = 2) -> dict:
+    """Call Gemini and parse JSON, retrying on malformed/truncated output.
+    LLM output varies run-to-run, so a fresh attempt usually succeeds."""
+    last = None
+    for _ in range(max(1, tries)):
+        try:
+            return _call_gemini(client, message)
+        except json.JSONDecodeError as e:
+            last = e
+            continue
+        except Exception as e:
+            raise RuntimeError(f"Gemini API call failed: {e}")
+    raise RuntimeError("Gemini returned invalid JSON after retries: " + str(last))
 
 
 def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: int = 2) -> dict:
@@ -173,7 +206,7 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: i
     client = genai.Client(api_key=api_key)
 
     base_message = _build_user_message(ctx)
-    result = _call_gemini(client, base_message)
+    result = _call_gemini_json(client, base_message)
 
     if cfg is None:
         return result
@@ -186,7 +219,7 @@ def generate_ai_roster(ctx: RosterContext, cfg=None, weekly=None, max_retries: i
         attempt += 1
         feedback = build_retry_feedback(res)
         retry_message = base_message + "\n\n" + feedback
-        result = _call_gemini(client, retry_message)
+        result = _call_gemini_json(client, retry_message)
         res = validate_roster(cfg, result, weekly=weekly)
 
     result = res.corrected_roster
