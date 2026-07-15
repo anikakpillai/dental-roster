@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import os
+import re
 import time
 
 from google import genai
@@ -142,6 +143,46 @@ def _available_staff_per_day(ctx) -> dict:
     return out
 
 
+def _repair_json(text: str) -> str:
+    """Fix the small syntax slips LLMs commonly make, without altering data.
+    Handles: trailing commas before } or ], stray control chars, smart quotes."""
+    t = text
+    # Smart quotes -> plain (models sometimes emit them in notes)
+    t = t.translate({0x201c: 34, 0x201d: 34, 0x2018: 39, 0x2019: 39})
+    # Remove trailing commas:  {"a":1,}  or  [1,2,]
+    t = re.sub(r",(\s*[}\]])", r"\1", t)
+    # Strip raw control characters that are illegal inside JSON strings
+    t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", t)
+    return t
+
+
+def _extract_json(text: str) -> dict:
+    """Parse a model response into a dict, tolerating fences, prose, and minor
+    syntax slips. Raises json.JSONDecodeError if nothing usable is present."""
+    t = text.strip()
+    _fence = chr(96) * 3
+    if _fence in t:
+        parts = t.split(_fence)
+        for p in parts:
+            p = p.strip()
+            if p.startswith("json"):
+                p = p[4:].strip()
+            if p.startswith("{"):
+                t = p
+                break
+    # Trim any prose before/after the JSON object
+    i = t.find("{")
+    if i > 0:
+        t = t[i:]
+    for candidate in (t, _repair_json(t)):
+        try:
+            obj, _end = json.JSONDecoder().raw_decode(candidate)
+            return obj
+        except json.JSONDecodeError as e:
+            last = e
+    raise last
+
+
 # Google-side transient errors worth waiting out (overload / rate limit / 5xx).
 _TRANSIENT = ("503", "UNAVAILABLE", "overload", "high demand", "429",
               "RESOURCE_EXHAUSTED", "500", "INTERNAL", "deadline", "timeout")
@@ -176,18 +217,10 @@ def _call_gemini(client, message: str) -> dict:
                     "Gemini is temporarily busy (Google-side overload). "
                     "Please click Build again in a few seconds.")
             raise RuntimeError(f"Gemini API call failed: {e}")
-    text = (response.text or "").strip()
-    _fence = chr(96) * 3  # markdown code fence (kept out of the literal for paste-safety)
-    if text.startswith(_fence):
-        text = text.split(_fence, 2)[1]
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-    obj, _end = json.JSONDecoder().raw_decode(text)  # raises JSONDecodeError on malformed output
-    return obj
+    return _extract_json(response.text or "")
 
 
-def _call_gemini_json(client, message: str, tries: int = 2) -> dict:
+def _call_gemini_json(client, message: str, tries: int = 3) -> dict:
     """Call Gemini and parse JSON, retrying on malformed/truncated output.
     LLM output varies run-to-run, so a fresh attempt usually succeeds."""
     last = None
