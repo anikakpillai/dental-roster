@@ -212,6 +212,48 @@ def validate_roster(cfg: AppConfig, ai_result: dict, weekly=None, dentist_truth=
             weekly_hours[sid] = weekly_hours.get(sid, 0.0) + hours
             kept.append(entry)
 
+        # ASSISTANT COVERAGE: flag any part of a dentist's day staffed below their
+        # required assistant count (rules.assistant_count_by_dentist, default 1).
+        if day_iso:
+            for de in [e for e in kept
+                       if getattr(getattr(staff_by_id.get(e.get("staff_id")), "role", None), "value", "") == "dentist"]:
+                d_sid = de.get("staff_id")
+                d_name = de.get("name", d_sid)
+                required = max(1, int((cfg.rules.assistant_count_by_dentist or {}).get(d_sid, 1)))
+                events = []
+                for ae in kept:
+                    st = staff_by_id.get(ae.get("staff_id"))
+                    if not st or getattr(getattr(st, "role", None), "value", "") != "assistant":
+                        continue
+                    if ae.get("serves") in (d_sid, d_name):
+                        a0, a1 = _hm(ae.get("start", "")), _hm(ae.get("end", ""))
+                        if a1 > a0:
+                            events.append((a0, 1)); events.append((a1, -1))
+                span0, span1 = _hm(de.get("start", "")), _hm(de.get("end", ""))
+                events.sort()
+                gaps, depth, cur = [], 0, span0
+                idx = 0
+                # advance events before span start
+                while idx < len(events) and events[idx][0] <= span0:
+                    depth += events[idx][1]; idx += 1
+                while cur < span1:
+                    nxt = events[idx][0] if idx < len(events) else span1
+                    seg_end = min(nxt, span1)
+                    if depth < required and seg_end > cur:
+                        gaps.append((cur, seg_end, depth))
+                    cur = seg_end
+                    while idx < len(events) and events[idx][0] == cur:
+                        depth += events[idx][1]; idx += 1
+                gaps = [(a, b, d) for a, b, d in gaps if b - a > 30]   # ignore slivers <=30 min
+                if gaps:
+                    windows = ", ".join(
+                        f"{a//60:02d}:{a%60:02d}-{b//60:02d}:{b%60:02d} ({d} of {required} assistants)"
+                        for a, b, d in gaps)
+                    res.violations.append(Violation(
+                        "warning", d_sid, d_name, day_iso, "ASSISTANT_COVERAGE_GAP",
+                        f"{d_name} is under-covered: {windows}. Stagger or add assistants, "
+                        f"or accept the gap."))
+
         # Insert any dentist Open Dental says works today but the draft omitted.
         if dentist_truth is not None and day_iso:
             present = {e.get("staff_id") for e in kept}
