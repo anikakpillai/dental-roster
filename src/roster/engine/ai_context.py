@@ -130,7 +130,7 @@ def build_standing_rules(cfg: AppConfig) -> dict:
             "5. Balance hours fairly across the team.",
         ],
         "dentist_preferences": r.dentist_preferences,
-        "fixed_assistants": r.fixed_assistants,
+        "preferred_assistants": {"note": "PREFERENCE not law: use these assistants for this dentist when available; substitute freely if they are off or needed elsewhere. The required COUNT (assistant_count_by_dentist) is the hard rule.", "by_dentist": r.fixed_assistants},
         "assistant_count_by_dentist": r.assistant_count_by_dentist,
         "front_desk_policy": {
             "description": "One opener + one closer per day. A 3rd front desk person "
