@@ -204,6 +204,10 @@ def _call_gemini(client, message: str) -> dict:
                     max_output_tokens=MAX_TOKENS,
                     temperature=0.2,
                     response_mime_type="application/json",
+                    # gemini-2.5-flash thinks by default and thinking tokens count
+                    # against max_output_tokens -> truncated JSON. Disable it: the
+                    # full budget goes to the roster, and responses are much faster.
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
             )
             break
